@@ -1,0 +1,40 @@
+// Prisma schema for Jewellery Marketplace Auth System
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum UserType {
+  USER
+  VENDOR
+}
+
+enum UserStatus {
+  ACTIVE
+  BLOCKED
+}
+
+model User {
+  id               String     @id @default(uuid())
+  userId           String     @unique
+  type             UserType
+  firstName        String
+  lastName         String
+  mobileNumber     String
+  email            String
+  status           UserStatus @default(ACTIVE)
+  isMobileVerified Boolean    @default(true)
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  @@unique([mobileNumber, type])
+  @@unique([email, type])
+  @@index([mobileNumber, type])
+  @@index([email, type])
+  @@index([userId])
+}
