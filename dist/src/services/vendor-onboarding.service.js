@@ -67,6 +67,22 @@ let VendorOnboardingService = class VendorOnboardingService {
         const newIsOnboarded = newStep === client_1.OnboardingStep.COMPLETED || isOnboarded;
         return { onboardingStep: newStep, isOnboarded: newIsOnboarded };
     }
+    async getStep1(userId) {
+        const [profile, user] = await Promise.all([
+            this.getOrCreateProfile(userId),
+            this.prisma.user.findUnique({ where: { userId } }),
+        ]);
+        return {
+            onboardingStep: profile.onboardingStep,
+            firstName: user?.firstName ?? '',
+            lastName: user?.lastName ?? '',
+            email: user?.email ?? '',
+            mobileNumber: user?.mobileNumber ?? '',
+            gender: profile.gender,
+            dob: profile.dob?.toISOString().split('T')[0] ?? null,
+            profilePicture: profile.profilePicture,
+        };
+    }
     async updateStep1(userId, dto, profilePictureFile) {
         if (profilePictureFile) {
             this.s3.validateFile(profilePictureFile);
@@ -78,21 +94,48 @@ let VendorOnboardingService = class VendorOnboardingService {
             profilePictureUrl = await this.s3.uploadFile(profilePictureFile, `vendors/${userId}/profile-picture.${ext}`);
         }
         const { onboardingStep, isOnboarded } = this.resolveNewOnboardingStep(profile.onboardingStep, 1, profile.isOnboarded);
-        const updated = await this.prisma.vendorProfile.update({
-            where: { userId },
-            data: {
-                gender: dto.gender,
-                dob: new Date(dto.dob),
-                ...(profilePictureUrl !== undefined && { profilePicture: profilePictureUrl }),
-                onboardingStep,
-                isOnboarded,
-            },
-        });
+        const [updated, user] = await Promise.all([
+            this.prisma.vendorProfile.update({
+                where: { userId },
+                data: {
+                    gender: dto.gender,
+                    dob: new Date(dto.dob),
+                    ...(profilePictureUrl !== undefined && { profilePicture: profilePictureUrl }),
+                    onboardingStep,
+                    isOnboarded,
+                },
+            }),
+            this.prisma.user.findUnique({ where: { userId } }),
+        ]);
         return {
             onboardingStep: updated.onboardingStep,
+            firstName: user?.firstName ?? '',
+            lastName: user?.lastName ?? '',
+            email: user?.email ?? '',
+            mobileNumber: user?.mobileNumber ?? '',
             gender: updated.gender,
             dob: updated.dob?.toISOString().split('T')[0] ?? null,
             profilePicture: updated.profilePicture,
+        };
+    }
+    async getStep2(userId) {
+        const profile = await this.getOrCreateProfile(userId);
+        return {
+            onboardingStep: profile.onboardingStep,
+            storeName: profile.storeName,
+            storeDescription: profile.storeDescription,
+            storeLogo: profile.storeLogo,
+            storeCoverImages: profile.storeCoverImages ?? [],
+            storeLocation: profile.storeLocation,
+            jewelleryStartingPrice: profile.jewelleryStartingPrice
+                ? Number(profile.jewelleryStartingPrice)
+                : null,
+            storeWebsite: profile.storeWebsite,
+            storeContactNumber: profile.storeContactNumber,
+            storeEmail: profile.storeEmail,
+            storeOpeningTime: profile.storeOpeningTime,
+            storeClosingTime: profile.storeClosingTime,
+            storeFoundedYear: profile.storeFoundedYear,
         };
     }
     async updateStep2(userId, dto, storeLogoFile, storeCoverFiles) {
@@ -145,9 +188,38 @@ let VendorOnboardingService = class VendorOnboardingService {
         return {
             onboardingStep: updated.onboardingStep,
             storeName: updated.storeName,
+            storeDescription: updated.storeDescription,
             storeLogo: updated.storeLogo,
             storeCoverImages: updated.storeCoverImages,
             storeLocation: updated.storeLocation,
+            jewelleryStartingPrice: updated.jewelleryStartingPrice
+                ? Number(updated.jewelleryStartingPrice)
+                : null,
+            storeWebsite: updated.storeWebsite,
+            storeContactNumber: updated.storeContactNumber,
+            storeEmail: updated.storeEmail,
+            storeOpeningTime: updated.storeOpeningTime,
+            storeClosingTime: updated.storeClosingTime,
+            storeFoundedYear: updated.storeFoundedYear,
+        };
+    }
+    async getStep3(userId) {
+        const profile = await this.getOrCreateProfile(userId);
+        const items = await this.prisma.jewelleryShowcase.findMany({
+            where: { vendorProfileId: profile.id },
+            orderBy: { createdAt: 'asc' },
+        });
+        return {
+            onboardingStep: profile.onboardingStep,
+            isOnboarded: profile.isOnboarded,
+            totalItems: items.length,
+            showcase: items.map((item) => ({
+                id: item.id,
+                title: item.title,
+                description: item.description,
+                price: Number(item.price),
+                imageUrl: item.imageUrl,
+            })),
         };
     }
     async addShowcaseItems(userId, dto, itemImages) {
@@ -212,7 +284,10 @@ let VendorOnboardingService = class VendorOnboardingService {
         return { deletedItemId: itemId };
     }
     async getOnboardingStatus(userId) {
-        const profile = await this.prisma.vendorProfile.findUnique({ where: { userId } });
+        const [profile, user] = await Promise.all([
+            this.prisma.vendorProfile.findUnique({ where: { userId } }),
+            this.prisma.user.findUnique({ where: { userId } }),
+        ]);
         const onboardingStep = profile?.onboardingStep ?? client_1.OnboardingStep.PENDING;
         const isOnboarded = profile?.isOnboarded ?? false;
         return {
@@ -220,6 +295,12 @@ let VendorOnboardingService = class VendorOnboardingService {
             isOnboarded,
             completedSteps: this.resolveCompletedSteps(onboardingStep),
             nextStep: this.resolveNextStep(onboardingStep),
+            prefill: {
+                firstName: user?.firstName ?? '',
+                lastName: user?.lastName ?? '',
+                email: user?.email ?? '',
+                mobileNumber: user?.mobileNumber ?? '',
+            },
         };
     }
 };

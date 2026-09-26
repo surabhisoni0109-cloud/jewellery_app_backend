@@ -1,6 +1,6 @@
 export declare class StoreLocationDto {
-    latitude: number;
-    longitude: number;
+    latitude?: number;
+    longitude?: number;
     addressLine1: string;
     addressLine2?: string;
     area: string;

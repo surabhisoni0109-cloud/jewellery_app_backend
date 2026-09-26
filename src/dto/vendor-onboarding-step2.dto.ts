@@ -18,15 +18,15 @@ import { IsIndianMobile } from '../common/validators/indian-mobile.validator';
 import { IsTimeFormat } from '../common/validators/time-format.validator';
 
 export class StoreLocationDto {
-  @ApiProperty({ example: 28.6139, description: 'Latitude' })
+  @ApiProperty({ example: 28.6139, description: 'Latitude (optional)', required: false })
   @IsNumber()
-  @IsNotEmpty()
-  latitude!: number;
+  @IsOptional()
+  latitude?: number;
 
-  @ApiProperty({ example: 77.209, description: 'Longitude' })
+  @ApiProperty({ example: 77.209, description: 'Longitude (optional)', required: false })
   @IsNumber()
-  @IsNotEmpty()
-  longitude!: number;
+  @IsOptional()
+  longitude?: number;
 
   @ApiProperty({ example: '123, Gold Street', description: 'Address line 1' })
   @IsString()
@@ -80,7 +80,7 @@ export class VendorOnboardingStep2Dto {
   storeDescription!: string;
 
   @ApiProperty({
-    description: 'Store location as a JSON string',
+    description: 'Store location as a JSON string (latitude and longitude are optional)',
     example: '{"latitude":28.6139,"longitude":77.209,"addressLine1":"123 Gold St","area":"Karol Bagh","city":"New Delhi","state":"Delhi","country":"India","pincode":"110005"}',
     required: true,
   })

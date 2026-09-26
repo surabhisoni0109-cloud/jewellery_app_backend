@@ -45,14 +45,18 @@ async function parseAndValidateDto(cls, body) {
             body.items = JSON.parse(body.items);
         }
         catch {
-            throw new custom_exception_1.CustomException('items must be a valid JSON array', 'INVALID_IMAGE', common_1.HttpStatus.BAD_REQUEST);
+            throw new custom_exception_1.CustomException('items must be a valid JSON array', 'INVALID_ITEMS', common_1.HttpStatus.BAD_REQUEST);
         }
     }
     const instance = (0, class_transformer_1.plainToInstance)(cls, body, { enableImplicitConversion: true });
     const errors = await (0, class_validator_1.validate)(instance, { whitelist: true, stopAtFirstError: false });
     if (errors.length > 0) {
-        const messages = errors.flatMap((e) => Object.values(e.constraints ?? {}));
-        throw new custom_exception_1.CustomException(messages[0] ?? 'Validation failed', 'INVALID_IMAGE', common_1.HttpStatus.BAD_REQUEST);
+        const collectMessages = (errs) => errs.flatMap((e) => [
+            ...Object.values(e.constraints ?? {}),
+            ...collectMessages(e.children ?? []),
+        ]);
+        const messages = collectMessages(errors);
+        throw new custom_exception_1.CustomException(messages.length > 0 ? messages.join('; ') : 'Validation failed', 'VALIDATION_ERROR', common_1.HttpStatus.BAD_REQUEST);
     }
     return instance;
 }
@@ -64,15 +68,27 @@ let VendorOnboardingController = class VendorOnboardingController {
         const data = await this.onboardingService.getOnboardingStatus(user.userId);
         return { message: 'Onboarding status fetched successfully', data };
     }
+    async getStep1(user) {
+        const data = await this.onboardingService.getStep1(user.userId);
+        return { message: 'Personal profile fetched successfully', data };
+    }
     async updateStep1(user, rawBody, profilePicture) {
         const dto = await parseAndValidateDto(vendor_onboarding_step1_dto_1.VendorOnboardingStep1Dto, rawBody);
         const data = await this.onboardingService.updateStep1(user.userId, dto, profilePicture);
         return { message: 'Personal profile updated successfully', data };
     }
+    async getStep2(user) {
+        const data = await this.onboardingService.getStep2(user.userId);
+        return { message: 'Store profile fetched successfully', data };
+    }
     async updateStep2(user, rawBody, files) {
         const dto = await parseAndValidateDto(vendor_onboarding_step2_dto_1.VendorOnboardingStep2Dto, rawBody);
         const data = await this.onboardingService.updateStep2(user.userId, dto, files?.storeLogo?.[0], files?.storeCoverImages);
         return { message: 'Store profile updated successfully', data };
+    }
+    async getStep3(user) {
+        const data = await this.onboardingService.getStep3(user.userId);
+        return { message: 'Jewellery showcase fetched successfully', data };
     }
     async addShowcaseItems(user, rawBody, images) {
         const dto = await parseAndValidateDto(vendor_onboarding_step3_dto_1.VendorOnboardingStep3Dto, rawBody);
@@ -100,6 +116,20 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], VendorOnboardingController.prototype, "getOnboardingStatus", null);
 __decorate([
+    (0, common_1.Get)('step-1'),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Get Step 1 — Personal Profile',
+        description: 'Fetch saved personal profile details (gender, date of birth, profile picture) and user account info.',
+    }),
+    (0, api_response_wrapper_decorator_1.ApiWrappedResponse)(vendor_onboarding_response_dto_1.Step1ResponseDto, 200, 'Personal profile fetched successfully'),
+    (0, swagger_1.ApiResponse)({ status: 401, description: 'Unauthorized', type: api_response_dto_1.ApiErrorResponseDto }),
+    (0, swagger_1.ApiResponse)({ status: 403, description: 'Vendor-only (VENDOR_ONLY)', type: api_response_dto_1.ApiErrorResponseDto }),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], VendorOnboardingController.prototype, "getStep1", null);
+__decorate([
     (0, common_1.Patch)('step-1'),
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),
     (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('profilePicture', multerMemoryOptions)),
@@ -120,6 +150,20 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object, Object]),
     __metadata("design:returntype", Promise)
 ], VendorOnboardingController.prototype, "updateStep1", null);
+__decorate([
+    (0, common_1.Get)('step-2'),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Get Step 2 — Store Profile',
+        description: 'Fetch saved store profile details (name, description, logo, cover images, location, pricing, contact details, timings, and founding year).',
+    }),
+    (0, api_response_wrapper_decorator_1.ApiWrappedResponse)(vendor_onboarding_response_dto_1.Step2ResponseDto, 200, 'Store profile fetched successfully'),
+    (0, swagger_1.ApiResponse)({ status: 401, description: 'Unauthorized', type: api_response_dto_1.ApiErrorResponseDto }),
+    (0, swagger_1.ApiResponse)({ status: 403, description: 'Vendor-only (VENDOR_ONLY)', type: api_response_dto_1.ApiErrorResponseDto }),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], VendorOnboardingController.prototype, "getStep2", null);
 __decorate([
     (0, common_1.Patch)('step-2'),
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),
@@ -144,6 +188,20 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object, Object]),
     __metadata("design:returntype", Promise)
 ], VendorOnboardingController.prototype, "updateStep2", null);
+__decorate([
+    (0, common_1.Get)('step-3'),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Get Step 3 — Jewellery Showcase',
+        description: 'Fetch all jewellery showcase items for the authenticated vendor.',
+    }),
+    (0, api_response_wrapper_decorator_1.ApiWrappedResponse)(vendor_onboarding_response_dto_1.Step3ResponseDto, 200, 'Jewellery showcase fetched successfully'),
+    (0, swagger_1.ApiResponse)({ status: 401, description: 'Unauthorized', type: api_response_dto_1.ApiErrorResponseDto }),
+    (0, swagger_1.ApiResponse)({ status: 403, description: 'Vendor-only (VENDOR_ONLY)', type: api_response_dto_1.ApiErrorResponseDto }),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], VendorOnboardingController.prototype, "getStep3", null);
 __decorate([
     (0, common_1.Post)('step-3'),
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),

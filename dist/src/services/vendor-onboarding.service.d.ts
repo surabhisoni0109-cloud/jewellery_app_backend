@@ -11,18 +11,67 @@ export declare class VendorOnboardingService {
     private resolveCompletedSteps;
     private resolveNextStep;
     private resolveNewOnboardingStep;
-    updateStep1(userId: string, dto: VendorOnboardingStep1Dto, profilePictureFile?: Express.Multer.File): Promise<{
+    getStep1(userId: string): Promise<{
         onboardingStep: import(".prisma/client").$Enums.OnboardingStep;
+        firstName: string;
+        lastName: string;
+        email: string;
+        mobileNumber: string;
         gender: import(".prisma/client").$Enums.Gender | null;
         dob: string | null;
         profilePicture: string | null;
     }>;
-    updateStep2(userId: string, dto: VendorOnboardingStep2Dto, storeLogoFile?: Express.Multer.File, storeCoverFiles?: Express.Multer.File[]): Promise<{
+    updateStep1(userId: string, dto: VendorOnboardingStep1Dto, profilePictureFile?: Express.Multer.File): Promise<{
+        onboardingStep: import(".prisma/client").$Enums.OnboardingStep;
+        firstName: string;
+        lastName: string;
+        email: string;
+        mobileNumber: string;
+        gender: import(".prisma/client").$Enums.Gender | null;
+        dob: string | null;
+        profilePicture: string | null;
+    }>;
+    getStep2(userId: string): Promise<{
         onboardingStep: import(".prisma/client").$Enums.OnboardingStep;
         storeName: string | null;
+        storeDescription: string | null;
         storeLogo: string | null;
         storeCoverImages: string[];
         storeLocation: import("@prisma/client/runtime/library").JsonValue;
+        jewelleryStartingPrice: number | null;
+        storeWebsite: string | null;
+        storeContactNumber: string | null;
+        storeEmail: string | null;
+        storeOpeningTime: string | null;
+        storeClosingTime: string | null;
+        storeFoundedYear: number | null;
+    }>;
+    updateStep2(userId: string, dto: VendorOnboardingStep2Dto, storeLogoFile?: Express.Multer.File, storeCoverFiles?: Express.Multer.File[]): Promise<{
+        onboardingStep: import(".prisma/client").$Enums.OnboardingStep;
+        storeName: string | null;
+        storeDescription: string | null;
+        storeLogo: string | null;
+        storeCoverImages: string[];
+        storeLocation: import("@prisma/client/runtime/library").JsonValue;
+        jewelleryStartingPrice: number | null;
+        storeWebsite: string | null;
+        storeContactNumber: string | null;
+        storeEmail: string | null;
+        storeOpeningTime: string | null;
+        storeClosingTime: string | null;
+        storeFoundedYear: number | null;
+    }>;
+    getStep3(userId: string): Promise<{
+        onboardingStep: import(".prisma/client").$Enums.OnboardingStep;
+        isOnboarded: boolean;
+        totalItems: number;
+        showcase: {
+            id: string;
+            title: string;
+            description: string | null;
+            price: number;
+            imageUrl: string;
+        }[];
     }>;
     addShowcaseItems(userId: string, dto: VendorOnboardingStep3Dto, itemImages: Express.Multer.File[]): Promise<{
         onboardingStep: import(".prisma/client").$Enums.OnboardingStep;
@@ -44,5 +93,11 @@ export declare class VendorOnboardingService {
         isOnboarded: boolean;
         completedSteps: number[];
         nextStep: number | null;
+        prefill: {
+            firstName: string;
+            lastName: string;
+            email: string;
+            mobileNumber: string;
+        };
     }>;
 }

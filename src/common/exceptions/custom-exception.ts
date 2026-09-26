@@ -20,7 +20,9 @@ export type ErrorCode =
   | 'UNDERAGE'
   | 'INVALID_FOUNDED_YEAR'
   | 'SHOWCASE_ITEM_NOT_FOUND'
-  | 'SHOWCASE_LIMIT_REACHED';
+  | 'SHOWCASE_LIMIT_REACHED'
+  | 'INVALID_ITEMS'
+  | 'VALIDATION_ERROR';
 
 
 export class CustomException extends HttpException {

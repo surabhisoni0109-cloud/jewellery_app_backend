@@ -71,7 +71,7 @@ async function parseAndValidateDto<T extends object>(
     } catch {
       throw new CustomException(
         'items must be a valid JSON array',
-        'INVALID_IMAGE',
+        'INVALID_ITEMS',
         HttpStatus.BAD_REQUEST,
       );
     }
@@ -81,12 +81,24 @@ async function parseAndValidateDto<T extends object>(
   const errors = await validate(instance as object, { whitelist: true, stopAtFirstError: false });
 
   if (errors.length > 0) {
-    const messages = errors.flatMap((e) => Object.values(e.constraints ?? {}));
-    throw new CustomException(messages[0] ?? 'Validation failed', 'INVALID_IMAGE', HttpStatus.BAD_REQUEST);
+    // Collect all messages including nested errors
+    const collectMessages = (errs: typeof errors): string[] =>
+      errs.flatMap((e) => [
+        ...Object.values(e.constraints ?? {}),
+        ...collectMessages(e.children ?? []),
+      ]);
+
+    const messages = collectMessages(errors);
+    throw new CustomException(
+      messages.length > 0 ? messages.join('; ') : 'Validation failed',
+      'VALIDATION_ERROR',
+      HttpStatus.BAD_REQUEST,
+    );
   }
 
   return instance;
 }
+
 
 @ApiTags('Vendor Onboarding')
 @ApiBearerAuth()
@@ -110,6 +122,23 @@ export class VendorOnboardingController {
   async getOnboardingStatus(@CurrentUser() user: User) {
     const data = await this.onboardingService.getOnboardingStatus(user.userId);
     return { message: 'Onboarding status fetched successfully', data };
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // GET /vendor/onboarding/step-1
+  // ─────────────────────────────────────────────────────────────────────────
+
+  @Get('step-1')
+  @ApiOperation({
+    summary: 'Get Step 1 — Personal Profile',
+    description: 'Fetch saved personal profile details (gender, date of birth, profile picture) and user account info.',
+  })
+  @ApiWrappedResponse(Step1ResponseDto, 200, 'Personal profile fetched successfully')
+  @ApiResponse({ status: 401, description: 'Unauthorized', type: ApiErrorResponseDto })
+  @ApiResponse({ status: 403, description: 'Vendor-only (VENDOR_ONLY)', type: ApiErrorResponseDto })
+  async getStep1(@CurrentUser() user: User) {
+    const data = await this.onboardingService.getStep1(user.userId);
+    return { message: 'Personal profile fetched successfully', data };
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -137,6 +166,24 @@ export class VendorOnboardingController {
     const dto = await parseAndValidateDto(VendorOnboardingStep1Dto, rawBody);
     const data = await this.onboardingService.updateStep1(user.userId, dto, profilePicture);
     return { message: 'Personal profile updated successfully', data };
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // GET /vendor/onboarding/step-2
+  // ─────────────────────────────────────────────────────────────────────────
+
+  @Get('step-2')
+  @ApiOperation({
+    summary: 'Get Step 2 — Store Profile',
+    description:
+      'Fetch saved store profile details (name, description, logo, cover images, location, pricing, contact details, timings, and founding year).',
+  })
+  @ApiWrappedResponse(Step2ResponseDto, 200, 'Store profile fetched successfully')
+  @ApiResponse({ status: 401, description: 'Unauthorized', type: ApiErrorResponseDto })
+  @ApiResponse({ status: 403, description: 'Vendor-only (VENDOR_ONLY)', type: ApiErrorResponseDto })
+  async getStep2(@CurrentUser() user: User) {
+    const data = await this.onboardingService.getStep2(user.userId);
+    return { message: 'Store profile fetched successfully', data };
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -182,6 +229,23 @@ export class VendorOnboardingController {
       files?.storeCoverImages,
     );
     return { message: 'Store profile updated successfully', data };
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // GET /vendor/onboarding/step-3
+  // ─────────────────────────────────────────────────────────────────────────
+
+  @Get('step-3')
+  @ApiOperation({
+    summary: 'Get Step 3 — Jewellery Showcase',
+    description: 'Fetch all jewellery showcase items for the authenticated vendor.',
+  })
+  @ApiWrappedResponse(Step3ResponseDto, 200, 'Jewellery showcase fetched successfully')
+  @ApiResponse({ status: 401, description: 'Unauthorized', type: ApiErrorResponseDto })
+  @ApiResponse({ status: 403, description: 'Vendor-only (VENDOR_ONLY)', type: ApiErrorResponseDto })
+  async getStep3(@CurrentUser() user: User) {
+    const data = await this.onboardingService.getStep3(user.userId);
+    return { message: 'Jewellery showcase fetched successfully', data };
   }
 
   // ─────────────────────────────────────────────────────────────────────────

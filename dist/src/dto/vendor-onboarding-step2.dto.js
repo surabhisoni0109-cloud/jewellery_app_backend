@@ -19,15 +19,15 @@ class StoreLocationDto {
 }
 exports.StoreLocationDto = StoreLocationDto;
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 28.6139, description: 'Latitude' }),
+    (0, swagger_1.ApiProperty)({ example: 28.6139, description: 'Latitude (optional)', required: false }),
     (0, class_validator_1.IsNumber)(),
-    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Number)
 ], StoreLocationDto.prototype, "latitude", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 77.209, description: 'Longitude' }),
+    (0, swagger_1.ApiProperty)({ example: 77.209, description: 'Longitude (optional)', required: false }),
     (0, class_validator_1.IsNumber)(),
-    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Number)
 ], StoreLocationDto.prototype, "longitude", void 0);
 __decorate([
@@ -93,7 +93,7 @@ __decorate([
 ], VendorOnboardingStep2Dto.prototype, "storeDescription", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({
-        description: 'Store location as a JSON string',
+        description: 'Store location as a JSON string (latitude and longitude are optional)',
         example: '{"latitude":28.6139,"longitude":77.209,"addressLine1":"123 Gold St","area":"Karol Bagh","city":"New Delhi","state":"Delhi","country":"India","pincode":"110005"}',
         required: true,
     }),
