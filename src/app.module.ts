@@ -8,6 +8,7 @@ import { SmsModule } from './modules/sms.module';
 import { OtpModule } from './modules/otp.module';
 import { UsersModule } from './modules/users.module';
 import { AuthModule } from './modules/auth.module';
+import { VendorOnboardingModule } from './modules/vendor-onboarding.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { AuthModule } from './modules/auth.module';
     OtpModule,
     UsersModule,
     AuthModule,
+    VendorOnboardingModule,
   ],
 })
 export class AppModule {}

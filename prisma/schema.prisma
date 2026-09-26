@@ -19,6 +19,20 @@ enum UserStatus {
   BLOCKED
 }
 
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+  PREFER_NOT_TO_SAY
+}
+
+enum OnboardingStep {
+  PENDING
+  STEP_1_DONE
+  STEP_2_DONE
+  COMPLETED
+}
+
 model User {
   id               String     @id @default(uuid())
   userId           String     @unique
@@ -37,4 +51,56 @@ model User {
   @@index([mobileNumber, type])
   @@index([email, type])
   @@index([userId])
+}
+
+model VendorProfile {
+  id               String         @id @default(uuid())
+  userId           String         @unique
+
+  // ── Step 1: Personal Info ─────────────────────────
+  gender           Gender?
+  dob              DateTime?
+  profilePicture   String?
+
+  // ── Step 2: Store Info ────────────────────────────
+  storeName            String?
+  storeDescription     String?
+  storeLogo            String?
+  storeCoverImages     String[]
+  storeLocation        Json?
+  jewelleryStartingPrice Decimal? @db.Decimal(10, 2)
+  storeWebsite         String?
+  storeContactNumber   String?
+  storeEmail           String?
+  storeOpeningTime     String?
+  storeClosingTime     String?
+  storeFoundedYear     Int?
+
+  // ── Onboarding State ──────────────────────────────
+  onboardingStep   OnboardingStep @default(PENDING)
+  isOnboarded      Boolean        @default(false)
+
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  jewelleryShowcase JewelleryShowcase[]
+
+  @@index([userId])
+}
+
+model JewelleryShowcase {
+  id              String        @id @default(uuid())
+  vendorProfileId String
+
+  imageUrl        String
+  title           String
+  description     String?
+  price           Decimal       @db.Decimal(10, 2)
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  vendorProfile   VendorProfile @relation(fields: [vendorProfileId], references: [id], onDelete: Cascade)
+
+  @@index([vendorProfileId])
 }

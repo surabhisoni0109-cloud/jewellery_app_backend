@@ -8,7 +8,7 @@
 /.nyc_output
 
 # Production / Build Output
-/dist
+# /dist  ← committed to git so EC2 doesn't need to build
 /build
 
 # Environment variables & secrets (CRITICAL: Never commit .env)

@@ -82,6 +82,23 @@ class EnvironmentVariables {
   @Transform(({ value }) => value === 'true' || value === true)
   @IsOptional()
   SWAGGER_ENABLED: boolean = false;
+
+  // AWS S3
+  @IsString()
+  @IsOptional()
+  AWS_REGION: string = 'ap-south-1';
+
+  @IsString()
+  @IsOptional()
+  AWS_ACCESS_KEY_ID: string = '';
+
+  @IsString()
+  @IsOptional()
+  AWS_SECRET_ACCESS_KEY: string = '';
+
+  @IsString()
+  @IsOptional()
+  AWS_S3_BUCKET_NAME: string = '';
 }
 
 export function validate(config: Record<string, unknown>): EnvironmentVariables {

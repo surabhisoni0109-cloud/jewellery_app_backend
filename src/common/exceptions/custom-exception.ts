@@ -10,7 +10,18 @@ export type ErrorCode =
   | 'OTP_EXPIRED'
   | 'OTP_LIMIT_EXCEEDED'
   | 'ACCOUNT_BLOCKED'
-  | 'UNAUTHORIZED';
+  | 'UNAUTHORIZED'
+  | 'VENDOR_ONLY'
+  | 'PROFILE_NOT_FOUND'
+  | 'INVALID_IMAGE'
+  | 'TOO_MANY_IMAGES'
+  | 'INVALID_LOCATION'
+  | 'INVALID_TIME_RANGE'
+  | 'UNDERAGE'
+  | 'INVALID_FOUNDED_YEAR'
+  | 'SHOWCASE_ITEM_NOT_FOUND'
+  | 'SHOWCASE_LIMIT_REACHED';
+
 
 export class CustomException extends HttpException {
   public readonly errorCode: ErrorCode;

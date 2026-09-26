@@ -14,6 +14,7 @@ async function bootstrap() {
 
   const env = configService.get<string>('NODE_ENV', 'development');
   const port = configService.get<number>('PORT', 3000);
+  const appUrl = configService.get<string>('APP_URL', `http://localhost:${port}`);
   const swaggerEnabled = configService.get<boolean>('SWAGGER_ENABLED', false);
 
   // Set global API prefix
@@ -22,11 +23,15 @@ async function bootstrap() {
   // CORS Configuration
   app.enableCors();
 
+  // Disable HSTS on non-production to avoid browser forcing HTTPS without SSL cert
+  const hsts = env === 'production' ? undefined : false;
+
   // Helmet Security Middleware with custom CSP for Swagger UI route
   app.use((req: any, res: any, next: any) => {
     if (req.path.startsWith('/api/docs')) {
       // Relaxed CSP for Swagger UI documentation page
       helmet({
+        hsts,
         contentSecurityPolicy: {
           directives: {
             defaultSrc: ["'self'"],
@@ -38,9 +43,10 @@ async function bootstrap() {
       })(req, res, next);
     } else {
       // Strict helmet defaults for all standard API endpoints
-      helmet()(req, res, next);
+      helmet({ hsts })(req, res, next);
     }
   });
+
 
   // Global DTO Validation Pipe
   app.useGlobalPipes(
@@ -65,6 +71,7 @@ async function bootstrap() {
         'Authentication & Identity Backend Service for Buyers (USER) and Sellers (VENDOR).',
       )
       .setVersion('1.0.0')
+      .addServer(appUrl, env === 'production' ? 'Production' : 'Local')
       .addBearerAuth(
         {
           type: 'http',
@@ -90,14 +97,15 @@ async function bootstrap() {
       },
     });
 
-    logger.log(`Swagger UI documentation available at http://localhost:${port}/api/docs`);
-    logger.log(`Swagger OpenAPI raw JSON available at http://localhost:${port}/api/docs-json`);
+    logger.log(`Swagger UI documentation available at ${appUrl}/api/docs`);
+    logger.log(`Swagger OpenAPI raw JSON available at ${appUrl}/api/docs-json`);
   } else {
     logger.log('Swagger documentation is disabled in production mode');
   }
 
   await app.listen(port);
-  logger.log(`Application started and listening on port ${port} (Environment: ${env})`);
+  logger.log(`Application started on port ${port} (Environment: ${env})`);
+  logger.log(`API base URL: ${appUrl}/api`);
 }
 
 bootstrap();
