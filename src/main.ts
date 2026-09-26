@@ -33,6 +33,7 @@ async function bootstrap() {
       helmet({
         hsts,
         contentSecurityPolicy: {
+          useDefaults: false,
           directives: {
             defaultSrc: ["'self'"],
             styleSrc: ["'self'", "'unsafe-inline'"],
@@ -43,7 +44,13 @@ async function bootstrap() {
       })(req, res, next);
     } else {
       // Strict helmet defaults for all standard API endpoints
-      helmet({ hsts })(req, res, next);
+      helmet({
+        hsts,
+        contentSecurityPolicy: {
+          useDefaults: false,
+          directives: helmet.contentSecurityPolicy.getDefaultDirectives(),
+        },
+      })(req, res, next);
     }
   });
 
