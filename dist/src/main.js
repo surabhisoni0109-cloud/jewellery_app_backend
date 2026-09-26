@@ -24,6 +24,7 @@ async function bootstrap() {
             (0, helmet_1.default)({
                 hsts,
                 contentSecurityPolicy: {
+                    useDefaults: false,
                     directives: {
                         defaultSrc: ["'self'"],
                         styleSrc: ["'self'", "'unsafe-inline'"],
@@ -34,7 +35,13 @@ async function bootstrap() {
             })(req, res, next);
         }
         else {
-            (0, helmet_1.default)({ hsts })(req, res, next);
+            (0, helmet_1.default)({
+                hsts,
+                contentSecurityPolicy: {
+                    useDefaults: false,
+                    directives: helmet_1.default.contentSecurityPolicy.getDefaultDirectives(),
+                },
+            })(req, res, next);
         }
     });
     app.useGlobalPipes(new common_1.ValidationPipe({
