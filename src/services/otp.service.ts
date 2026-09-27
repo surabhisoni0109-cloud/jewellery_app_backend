@@ -123,6 +123,7 @@ export class OtpService {
     const dataToStore = JSON.stringify({ hash, payload });
 
     await this.redisService.set(otpKey, dataToStore, this.ttlSeconds);
+    await this.redisService.set(`signup_payload:${mobileNumber}`, JSON.stringify(payload), 900);
     await this.redisService.del(attemptKey); // Reset failed attempts
 
     await this.registerRateLimitUsage(mobileNumber, purposeKey);
@@ -142,6 +143,77 @@ export class OtpService {
     }
 
     return result;
+  }
+
+  /**
+   * Resends OTP for pending signup using previously submitted registration payload.
+   */
+  async resendSignupOtp(mobileNumber: string): Promise<GeneratedOtpResult> {
+    const purposeKey = `signup:${mobileNumber}`;
+    await this.checkRateLimits(mobileNumber, purposeKey);
+
+    const otpKey = `otp:${purposeKey}`;
+    const payloadKey = `signup_payload:${mobileNumber}`;
+
+    let payload: any = null;
+    const storedDataRaw = await this.redisService.get(otpKey);
+    if (storedDataRaw) {
+      const parsed = JSON.parse(storedDataRaw);
+      payload = parsed.payload;
+    } else {
+      const storedPayloadRaw = await this.redisService.get(payloadKey);
+      if (storedPayloadRaw) {
+        payload = JSON.parse(storedPayloadRaw);
+      }
+    }
+
+    if (!payload) {
+      throw new CustomException(
+        'Signup session has expired. Please initiate registration again.',
+        'OTP_EXPIRED',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const rawOtp = this.generateRawOtp();
+    const hash = this.hashOtp(rawOtp);
+    const attemptKey = `otp:attempts:${purposeKey}`;
+
+    const dataToStore = JSON.stringify({ hash, payload });
+
+    await this.redisService.set(otpKey, dataToStore, this.ttlSeconds);
+    await this.redisService.set(payloadKey, JSON.stringify(payload), 900);
+    await this.redisService.del(attemptKey);
+
+    await this.registerRateLimitUsage(mobileNumber, purposeKey);
+
+    // Dispatch SMS via provider
+    await this.smsProvider.sendOtp(mobileNumber, rawOtp);
+
+    const expiresAt = new Date(Date.now() + this.ttlSeconds * 1000).toISOString();
+
+    const result: GeneratedOtpResult = {
+      mobileNumber,
+      expiresAt,
+    };
+
+    if (this.exposeDevOtp) {
+      result.devOtp = rawOtp;
+    }
+
+    return result;
+  }
+
+  /**
+   * Checks if there is a pending signup session in Redis for this mobile number.
+   */
+  async hasPendingSignup(mobileNumber: string): Promise<boolean> {
+    const otpKey = `otp:signup:${mobileNumber}`;
+    const payloadKey = `signup_payload:${mobileNumber}`;
+    const hasOtp = await this.redisService.get(otpKey);
+    if (hasOtp) return true;
+    const hasPayload = await this.redisService.get(payloadKey);
+    return Boolean(hasPayload);
   }
 
   /**
@@ -233,6 +305,10 @@ export class OtpService {
     // Success: Delete single-use OTP & attempt keys
     await this.redisService.del(otpKey);
     await this.redisService.del(attemptKey);
+    if (purposeKey.startsWith('signup:')) {
+      const mobile = purposeKey.replace('signup:', '');
+      await this.redisService.del(`signup_payload:${mobile}`);
+    }
 
     return parsedData;
   }

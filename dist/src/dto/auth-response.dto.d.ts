@@ -25,4 +25,11 @@ export declare class AuthSessionResponseDto {
     mobileNumber: string;
     email: string;
     token: string;
+    refreshToken?: string;
+}
+export declare class RefreshTokenResponseDto {
+    token: string;
+    refreshToken: string;
+    tokenType: string;
+    expiresIn: number;
 }

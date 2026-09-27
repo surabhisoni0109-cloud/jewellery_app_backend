@@ -8,18 +8,66 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthService = void 0;
 const common_1 = require("@nestjs/common");
 const jwt_1 = require("@nestjs/jwt");
+const config_1 = require("@nestjs/config");
+const crypto = require("crypto");
 const users_service_1 = require("./users.service");
 const otp_service_1 = require("./otp.service");
+const redis_service_1 = require("./redis.service");
+const resend_otp_dto_1 = require("../dto/resend-otp.dto");
 const custom_exception_1 = require("../common/exceptions/custom-exception");
 let AuthService = class AuthService {
-    constructor(usersService, otpService, jwtService) {
+    constructor(usersService, otpService, jwtService, redisService, configService) {
         this.usersService = usersService;
         this.otpService = otpService;
         this.jwtService = jwtService;
+        this.redisService = redisService;
+        this.configService = configService;
+    }
+    get jwtSecret() {
+        return this.configService?.get('JWT_SECRET') || 'default_jwt_secret_min_32_chars';
+    }
+    get refreshSecret() {
+        const customRefreshSecret = this.configService?.get('JWT_REFRESH_SECRET');
+        if (customRefreshSecret && customRefreshSecret.trim().length > 0) {
+            return customRefreshSecret.trim();
+        }
+        return `${this.jwtSecret}_refresh`;
+    }
+    get accessExpiresIn() {
+        return (this.configService?.get('JWT_ACCESS_EXPIRES_IN') ||
+            this.configService?.get('JWT_EXPIRES_IN') ||
+            '1d');
+    }
+    get refreshExpiresIn() {
+        return this.configService?.get('JWT_REFRESH_EXPIRES_IN') || '7d';
+    }
+    parseDurationToSeconds(durationStr, defaultSeconds) {
+        if (!durationStr)
+            return defaultSeconds;
+        const match = durationStr.toString().trim().match(/^(\d+)([smhd])?$/i);
+        if (!match)
+            return defaultSeconds;
+        const value = parseInt(match[1], 10);
+        const unit = (match[2] || 's').toLowerCase();
+        switch (unit) {
+            case 's':
+                return value;
+            case 'm':
+                return value * 60;
+            case 'h':
+                return value * 3600;
+            case 'd':
+                return value * 86400;
+            default:
+                return defaultSeconds;
+        }
     }
     async signup(dto) {
         const trimmedMobile = this.usersService.trimInput(dto.mobileNumber);
@@ -79,6 +127,34 @@ let AuthService = class AuthService {
         }
         return this.issueSessionAfterVerification(user);
     }
+    async resendOtp(dto) {
+        const trimmedMobile = this.usersService.trimInput(dto.mobileNumber);
+        if (dto.purpose === resend_otp_dto_1.OtpPurpose.SIGNUP) {
+            return this.otpService.resendSignupOtp(trimmedMobile);
+        }
+        if (dto.purpose === resend_otp_dto_1.OtpPurpose.SIGNIN) {
+            const user = await this.usersService.findByMobileAndType(trimmedMobile, dto.type);
+            if (!user) {
+                throw new custom_exception_1.CustomException(`No registered ${dto.type.toLowerCase()} account found with mobile number ${trimmedMobile}`, 'USER_NOT_FOUND', common_1.HttpStatus.NOT_FOUND);
+            }
+            if (user.status === 'BLOCKED') {
+                throw new custom_exception_1.CustomException('Account has been blocked. Please contact support.', 'ACCOUNT_BLOCKED', common_1.HttpStatus.FORBIDDEN);
+            }
+            return this.otpService.sendSigninOtp(dto.type, trimmedMobile, user.userId);
+        }
+        const hasPendingSignup = await this.otpService.hasPendingSignup(trimmedMobile);
+        if (hasPendingSignup) {
+            return this.otpService.resendSignupOtp(trimmedMobile);
+        }
+        const user = await this.usersService.findByMobileAndType(trimmedMobile, dto.type);
+        if (!user) {
+            throw new custom_exception_1.CustomException(`No registered account or pending signup found with mobile number ${trimmedMobile}`, 'USER_NOT_FOUND', common_1.HttpStatus.NOT_FOUND);
+        }
+        if (user.status === 'BLOCKED') {
+            throw new custom_exception_1.CustomException('Account has been blocked. Please contact support.', 'ACCOUNT_BLOCKED', common_1.HttpStatus.FORBIDDEN);
+        }
+        return this.otpService.sendSigninOtp(dto.type, trimmedMobile, user.userId);
+    }
     async createAccountAfterVerification(data) {
         return this.usersService.createUser(data);
     }
@@ -89,6 +165,20 @@ let AuthService = class AuthService {
             mobileNumber: user.mobileNumber,
         };
         const token = this.jwtService.sign(payload);
+        const jti = crypto.randomUUID();
+        const refreshPayload = {
+            sub: user.userId,
+            jti,
+            tokenType: 'refresh',
+        };
+        const refreshToken = this.jwtService.sign(refreshPayload, {
+            secret: this.refreshSecret,
+            expiresIn: this.refreshExpiresIn,
+        });
+        const refreshTtlSeconds = this.parseDurationToSeconds(this.refreshExpiresIn, 7 * 86400);
+        if (this.redisService) {
+            await this.redisService.set(`refresh_token:${user.userId}:${jti}`, '1', refreshTtlSeconds);
+        }
         return {
             userId: user.userId,
             type: user.type.toLowerCase(),
@@ -97,14 +187,81 @@ let AuthService = class AuthService {
             mobileNumber: user.mobileNumber,
             email: user.email,
             token,
+            refreshToken,
+        };
+    }
+    async refreshToken(dto) {
+        let decoded;
+        try {
+            decoded = this.jwtService.verify(dto.refreshToken, {
+                secret: this.refreshSecret,
+            });
+        }
+        catch (err) {
+            if (err?.name === 'TokenExpiredError') {
+                throw new custom_exception_1.CustomException('Refresh token has expired. Please sign in again.', 'REFRESH_TOKEN_EXPIRED', common_1.HttpStatus.UNAUTHORIZED);
+            }
+            throw new custom_exception_1.CustomException('Invalid refresh token. Please sign in again.', 'INVALID_REFRESH_TOKEN', common_1.HttpStatus.UNAUTHORIZED);
+        }
+        if (!decoded || decoded.tokenType !== 'refresh' || !decoded.sub || !decoded.jti) {
+            throw new custom_exception_1.CustomException('Invalid refresh token payload.', 'INVALID_REFRESH_TOKEN', common_1.HttpStatus.UNAUTHORIZED);
+        }
+        const userId = decoded.sub;
+        const jti = decoded.jti;
+        if (this.redisService) {
+            const stored = await this.redisService.get(`refresh_token:${userId}:${jti}`);
+            if (!stored) {
+                throw new custom_exception_1.CustomException('Refresh token has been revoked or already used.', 'INVALID_REFRESH_TOKEN', common_1.HttpStatus.UNAUTHORIZED);
+            }
+        }
+        const user = await this.usersService.findByUserId(userId);
+        if (!user) {
+            throw new custom_exception_1.CustomException('User account associated with this token does not exist.', 'USER_NOT_FOUND', common_1.HttpStatus.UNAUTHORIZED);
+        }
+        if (user.status === 'BLOCKED') {
+            throw new custom_exception_1.CustomException('Account has been blocked. Please contact support.', 'ACCOUNT_BLOCKED', common_1.HttpStatus.FORBIDDEN);
+        }
+        if (this.redisService) {
+            await this.redisService.del(`refresh_token:${userId}:${jti}`);
+        }
+        const accessPayload = {
+            sub: user.userId,
+            type: user.type,
+            mobileNumber: user.mobileNumber,
+        };
+        const newAccessToken = this.jwtService.sign(accessPayload);
+        const newJti = crypto.randomUUID();
+        const newRefreshPayload = {
+            sub: user.userId,
+            jti: newJti,
+            tokenType: 'refresh',
+        };
+        const newRefreshToken = this.jwtService.sign(newRefreshPayload, {
+            secret: this.refreshSecret,
+            expiresIn: this.refreshExpiresIn,
+        });
+        const refreshTtlSeconds = this.parseDurationToSeconds(this.refreshExpiresIn, 7 * 86400);
+        if (this.redisService) {
+            await this.redisService.set(`refresh_token:${userId}:${newJti}`, '1', refreshTtlSeconds);
+        }
+        const accessExpiresInSeconds = this.parseDurationToSeconds(this.accessExpiresIn, 86400);
+        return {
+            token: newAccessToken,
+            refreshToken: newRefreshToken,
+            tokenType: 'Bearer',
+            expiresIn: accessExpiresInSeconds,
         };
     }
 };
 exports.AuthService = AuthService;
 exports.AuthService = AuthService = __decorate([
     (0, common_1.Injectable)(),
+    __param(3, (0, common_1.Optional)()),
+    __param(4, (0, common_1.Optional)()),
     __metadata("design:paramtypes", [users_service_1.UsersService,
         otp_service_1.OtpService,
-        jwt_1.JwtService])
+        jwt_1.JwtService,
+        redis_service_1.RedisService,
+        config_1.ConfigService])
 ], AuthService);
 //# sourceMappingURL=auth.service.js.map

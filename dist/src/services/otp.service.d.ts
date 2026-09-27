@@ -23,6 +23,8 @@ export declare class OtpService {
     checkRateLimits(mobileNumber: string, purposeKey: string): Promise<void>;
     registerRateLimitUsage(mobileNumber: string, purposeKey: string): Promise<void>;
     sendSignupOtp(mobileNumber: string, payload: any): Promise<GeneratedOtpResult>;
+    resendSignupOtp(mobileNumber: string): Promise<GeneratedOtpResult>;
+    hasPendingSignup(mobileNumber: string): Promise<boolean>;
     sendSigninOtp(type: string, mobileNumber: string, userId: string): Promise<GeneratedOtpResult>;
     verifyOtpAndRetrieveData<T>(purposeKey: string, inputOtp: string): Promise<T>;
 }

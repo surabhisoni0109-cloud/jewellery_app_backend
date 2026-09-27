@@ -20,6 +20,8 @@ const signup_dto_1 = require("../dto/signup.dto");
 const signup_verify_dto_1 = require("../dto/signup-verify.dto");
 const signin_dto_1 = require("../dto/signin.dto");
 const signin_verify_dto_1 = require("../dto/signin-verify.dto");
+const resend_otp_dto_1 = require("../dto/resend-otp.dto");
+const refresh_token_dto_1 = require("../dto/refresh-token.dto");
 const auth_response_dto_1 = require("../dto/auth-response.dto");
 const api_response_wrapper_decorator_1 = require("../common/decorators/api-response-wrapper.decorator");
 const api_response_dto_1 = require("../common/dto/api-response.dto");
@@ -61,6 +63,20 @@ let AuthController = class AuthController {
         return {
             message: 'Profile fetched successfully',
             data: user,
+        };
+    }
+    async resendOtp(resendOtpDto) {
+        const result = await this.authService.resendOtp(resendOtpDto);
+        return {
+            message: 'OTP resent successfully',
+            data: result,
+        };
+    }
+    async refreshToken(refreshTokenDto) {
+        const tokens = await this.authService.refreshToken(refreshTokenDto);
+        return {
+            message: 'Token refreshed successfully',
+            data: tokens,
         };
     }
 };
@@ -196,6 +212,67 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "getMe", null);
+__decorate([
+    (0, common_1.Post)('resend-otp'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Resend Verification OTP',
+        description: 'Resends OTP for ongoing registration or signin process with rate limiting and cooldown enforcement.',
+    }),
+    (0, api_response_wrapper_decorator_1.ApiWrappedResponse)(auth_response_dto_1.OtpResponseDto, 200, 'OTP resent successfully'),
+    (0, swagger_1.ApiResponse)({
+        status: 400,
+        description: 'Validation failed or signup session expired (INVALID_TYPE, INVALID_MOBILE, OTP_EXPIRED)',
+        type: api_response_dto_1.ApiErrorResponseDto,
+    }),
+    (0, swagger_1.ApiResponse)({
+        status: 403,
+        description: 'Account is blocked (ACCOUNT_BLOCKED)',
+        type: api_response_dto_1.ApiErrorResponseDto,
+    }),
+    (0, swagger_1.ApiResponse)({
+        status: 404,
+        description: 'User not found (USER_NOT_FOUND)',
+        type: api_response_dto_1.ApiErrorResponseDto,
+    }),
+    (0, swagger_1.ApiResponse)({
+        status: 429,
+        description: 'Rate limit or resend cooldown exceeded (OTP_LIMIT_EXCEEDED)',
+        type: api_response_dto_1.ApiErrorResponseDto,
+    }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [resend_otp_dto_1.ResendOtpDto]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "resendOtp", null);
+__decorate([
+    (0, common_1.Post)('refresh-token'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Refresh Access Token',
+        description: 'Exchanges a valid refresh token for a new access token and rotated refresh token.',
+    }),
+    (0, api_response_wrapper_decorator_1.ApiWrappedResponse)(auth_response_dto_1.RefreshTokenResponseDto, 200, 'Token refreshed successfully'),
+    (0, swagger_1.ApiResponse)({
+        status: 400,
+        description: 'Validation failed (VALIDATION_ERROR)',
+        type: api_response_dto_1.ApiErrorResponseDto,
+    }),
+    (0, swagger_1.ApiResponse)({
+        status: 401,
+        description: 'Invalid, expired, or revoked refresh token (INVALID_REFRESH_TOKEN, REFRESH_TOKEN_EXPIRED)',
+        type: api_response_dto_1.ApiErrorResponseDto,
+    }),
+    (0, swagger_1.ApiResponse)({
+        status: 403,
+        description: 'Account has been blocked (ACCOUNT_BLOCKED)',
+        type: api_response_dto_1.ApiErrorResponseDto,
+    }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [refresh_token_dto_1.RefreshTokenDto]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "refreshToken", null);
 exports.AuthController = AuthController = __decorate([
     (0, swagger_1.ApiTags)('Auth'),
     (0, common_1.Controller)('auth'),

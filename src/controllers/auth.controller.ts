@@ -18,9 +18,12 @@ import { SignupDto } from '../dto/signup.dto';
 import { SignupVerifyDto } from '../dto/signup-verify.dto';
 import { SigninDto } from '../dto/signin.dto';
 import { SigninVerifyDto } from '../dto/signin-verify.dto';
+import { ResendOtpDto } from '../dto/resend-otp.dto';
+import { RefreshTokenDto } from '../dto/refresh-token.dto';
 import {
   AuthSessionResponseDto,
   OtpResponseDto,
+  RefreshTokenResponseDto,
   UserResponseDto,
 } from '../dto/auth-response.dto';
 import { ApiWrappedResponse } from '../common/decorators/api-response-wrapper.decorator';
@@ -175,6 +178,73 @@ export class AuthController {
     return {
       message: 'Profile fetched successfully',
       data: user,
+    };
+  }
+
+  @Post('resend-otp')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Resend Verification OTP',
+    description:
+      'Resends OTP for ongoing registration or signin process with rate limiting and cooldown enforcement.',
+  })
+  @ApiWrappedResponse(OtpResponseDto, 200, 'OTP resent successfully')
+  @ApiResponse({
+    status: 400,
+    description: 'Validation failed or signup session expired (INVALID_TYPE, INVALID_MOBILE, OTP_EXPIRED)',
+    type: ApiErrorResponseDto,
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Account is blocked (ACCOUNT_BLOCKED)',
+    type: ApiErrorResponseDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'User not found (USER_NOT_FOUND)',
+    type: ApiErrorResponseDto,
+  })
+  @ApiResponse({
+    status: 429,
+    description: 'Rate limit or resend cooldown exceeded (OTP_LIMIT_EXCEEDED)',
+    type: ApiErrorResponseDto,
+  })
+  async resendOtp(@Body() resendOtpDto: ResendOtpDto) {
+    const result = await this.authService.resendOtp(resendOtpDto);
+    return {
+      message: 'OTP resent successfully',
+      data: result,
+    };
+  }
+
+  @Post('refresh-token')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Refresh Access Token',
+    description:
+      'Exchanges a valid refresh token for a new access token and rotated refresh token.',
+  })
+  @ApiWrappedResponse(RefreshTokenResponseDto, 200, 'Token refreshed successfully')
+  @ApiResponse({
+    status: 400,
+    description: 'Validation failed (VALIDATION_ERROR)',
+    type: ApiErrorResponseDto,
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Invalid, expired, or revoked refresh token (INVALID_REFRESH_TOKEN, REFRESH_TOKEN_EXPIRED)',
+    type: ApiErrorResponseDto,
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Account has been blocked (ACCOUNT_BLOCKED)',
+    type: ApiErrorResponseDto,
+  })
+  async refreshToken(@Body() refreshTokenDto: RefreshTokenDto) {
+    const tokens = await this.authService.refreshToken(refreshTokenDto);
+    return {
+      message: 'Token refreshed successfully',
+      data: tokens,
     };
   }
 }

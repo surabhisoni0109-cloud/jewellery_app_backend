@@ -3,6 +3,8 @@ import { SignupDto } from '../dto/signup.dto';
 import { SignupVerifyDto } from '../dto/signup-verify.dto';
 import { SigninDto } from '../dto/signin.dto';
 import { SigninVerifyDto } from '../dto/signin-verify.dto';
+import { ResendOtpDto } from '../dto/resend-otp.dto';
+import { RefreshTokenDto } from '../dto/refresh-token.dto';
 import { User } from '@prisma/client';
 export declare class AuthController {
     private readonly authService;
@@ -38,5 +40,13 @@ export declare class AuthController {
             createdAt: Date;
             updatedAt: Date;
         };
+    }>;
+    resendOtp(resendOtpDto: ResendOtpDto): Promise<{
+        message: string;
+        data: import("../services/otp.service").GeneratedOtpResult;
+    }>;
+    refreshToken(refreshTokenDto: RefreshTokenDto): Promise<{
+        message: string;
+        data: import("../services/auth.service").RefreshedTokens;
     }>;
 }

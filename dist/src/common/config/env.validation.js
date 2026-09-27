@@ -29,7 +29,10 @@ class EnvironmentVariables {
     constructor() {
         this.NODE_ENV = Environment.Development;
         this.PORT = 3000;
-        this.JWT_EXPIRES_IN = '7d';
+        this.JWT_EXPIRES_IN = '1d';
+        this.JWT_ACCESS_EXPIRES_IN = '1d';
+        this.JWT_REFRESH_SECRET = '';
+        this.JWT_REFRESH_EXPIRES_IN = '7d';
         this.OTP_TTL_SECONDS = 300;
         this.OTP_MAX_ATTEMPTS = 5;
         this.OTP_RESEND_COOLDOWN_SECONDS = 30;
@@ -72,6 +75,21 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], EnvironmentVariables.prototype, "JWT_EXPIRES_IN", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], EnvironmentVariables.prototype, "JWT_ACCESS_EXPIRES_IN", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], EnvironmentVariables.prototype, "JWT_REFRESH_SECRET", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], EnvironmentVariables.prototype, "JWT_REFRESH_EXPIRES_IN", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.MinLength)(16, { message: 'OTP_HMAC_SECRET must be at least 16 characters long' }),

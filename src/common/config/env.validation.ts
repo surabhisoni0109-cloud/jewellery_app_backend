@@ -43,7 +43,19 @@ class EnvironmentVariables {
 
   @IsString()
   @IsOptional()
-  JWT_EXPIRES_IN: string = '7d';
+  JWT_EXPIRES_IN: string = '1d';
+
+  @IsString()
+  @IsOptional()
+  JWT_ACCESS_EXPIRES_IN: string = '1d';
+
+  @IsString()
+  @IsOptional()
+  JWT_REFRESH_SECRET: string = '';
+
+  @IsString()
+  @IsOptional()
+  JWT_REFRESH_EXPIRES_IN: string = '7d';
 
   @IsString()
   @MinLength(16, { message: 'OTP_HMAC_SECRET must be at least 16 characters long' })

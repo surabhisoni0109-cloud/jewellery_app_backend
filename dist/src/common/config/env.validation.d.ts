@@ -15,6 +15,9 @@ declare class EnvironmentVariables {
     REDIS_URL: string;
     JWT_SECRET: string;
     JWT_EXPIRES_IN: string;
+    JWT_ACCESS_EXPIRES_IN: string;
+    JWT_REFRESH_SECRET: string;
+    JWT_REFRESH_EXPIRES_IN: string;
     OTP_HMAC_SECRET: string;
     OTP_TTL_SECONDS: number;
     OTP_MAX_ATTEMPTS: number;

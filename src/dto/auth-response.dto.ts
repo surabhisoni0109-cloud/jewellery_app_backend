@@ -74,4 +74,37 @@ export class AuthSessionResponseDto {
     description: 'JWT Bearer Access Token',
   })
   token!: string;
+
+  @ApiPropertyOptional({
+    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+    description: 'JWT Bearer Refresh Token',
+  })
+  refreshToken?: string;
 }
+
+export class RefreshTokenResponseDto {
+  @ApiProperty({
+    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+    description: 'Fresh JWT Bearer Access Token',
+  })
+  token!: string;
+
+  @ApiProperty({
+    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+    description: 'Rotated JWT Bearer Refresh Token',
+  })
+  refreshToken!: string;
+
+  @ApiProperty({
+    example: 'Bearer',
+    description: 'Token type',
+  })
+  tokenType!: string;
+
+  @ApiProperty({
+    example: 900,
+    description: 'Access token expiration in seconds',
+  })
+  expiresIn!: number;
+}
+

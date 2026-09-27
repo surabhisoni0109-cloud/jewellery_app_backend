@@ -101,7 +101,8 @@ After receiving the OTP, the user verifies their mobile number.
     "lastName": "Kumawat",
     "mobileNumber": "9876543210",
     "email": "yogesh@example.com",
-    "token": "JWT_TOKEN"
+    "token": "JWT_ACCESS_TOKEN",
+    "refreshToken": "JWT_REFRESH_TOKEN"
   }
 }
 ```
@@ -192,14 +193,101 @@ The user enters the OTP received on their registered mobile number.
     "lastName": "Kumawat",
     "mobileNumber": "9876543210",
     "email": "yogesh@example.com",
-    "token": "JWT_TOKEN"
+    "token": "JWT_ACCESS_TOKEN",
+    "refreshToken": "JWT_REFRESH_TOKEN"
   }
 }
 ```
 
 ---
 
-# 6. User Type
+# 6. Resend OTP
+
+Resends verification OTP for ongoing registration or signin without needing to re-enter all profile fields.
+
+## 6.1 Resend OTP Request
+
+### Endpoint
+
+`POST /api/auth/resend-otp`
+
+### Request Body
+
+```json
+{
+  "type": "user",
+  "mobileNumber": "9876543210",
+  "purpose": "signin"
+}
+```
+
+### Parameters
+
+| Parameter      | Type   | Required | Description                                                    |
+| -------------- | ------ | -------- | -------------------------------------------------------------- |
+| `type`         | String | Yes      | Account type: `user` or `vendor`                               |
+| `mobileNumber` | String | Yes      | Registered mobile number                                       |
+| `purpose`      | String | No       | Purpose: `'signup'` or `'signin'` (defaults to `'signin'`)     |
+
+### Success Response
+
+```json
+{
+  "success": true,
+  "message": "OTP resent successfully",
+  "data": {
+    "mobileNumber": "9876543210",
+    "expiresAt": "2026-09-20T16:05:00.000Z"
+  }
+}
+```
+
+> **Rate Limiting**: Enforces a 30-second cooldown between requests and a maximum of 5 requests per hour.
+
+---
+
+# 7. Refresh Token
+
+Exchanges a valid refresh token for a fresh access token and rotated refresh token.
+
+## 7.1 Refresh Token Request
+
+### Endpoint
+
+`POST /api/auth/refresh-token`
+
+### Request Body
+
+```json
+{
+  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+### Parameters
+
+| Parameter      | Type   | Required | Description                                     |
+| -------------- | ------ | -------- | ----------------------------------------------- |
+| `refreshToken` | String | Yes      | Valid refresh token received upon authentication |
+
+### Success Response
+
+```json
+{
+  "success": true,
+  "message": "Token refreshed successfully",
+  "data": {
+    "token": "NEW_JWT_ACCESS_TOKEN",
+    "refreshToken": "NEW_ROTATED_JWT_REFRESH_TOKEN",
+    "tokenType": "Bearer",
+    "expiresIn": 900
+  }
+}
+```
+
+---
+
+# 8. User Type
 
 The API supports two account types.
 
@@ -210,7 +298,7 @@ The API supports two account types.
 
 ---
 
-# 7. Common Error Response
+# 9. Common Error Response
 
 All APIs follow a consistent error response structure.
 
@@ -226,38 +314,43 @@ All APIs follow a consistent error response structure.
 
 ### Common Error Codes
 
-| Error Code              | Description                      |
-| ----------------------- | -------------------------------- |
-| `INVALID_TYPE`          | Invalid user type                |
-| `INVALID_MOBILE`        | Invalid mobile number            |
-| `MOBILE_ALREADY_EXISTS` | Mobile number already registered |
-| `EMAIL_ALREADY_EXISTS`  | Email already registered         |
-| `USER_NOT_FOUND`        | Account does not exist           |
-| `INVALID_OTP`           | OTP is incorrect                 |
-| `OTP_EXPIRED`           | OTP has expired                  |
-| `OTP_LIMIT_EXCEEDED`    | OTP request limit exceeded       |
-| `ACCOUNT_BLOCKED`       | Account has been blocked         |
+| Error Code              | Description                                    |
+| ----------------------- | ---------------------------------------------- |
+| `INVALID_TYPE`          | Invalid user type                              |
+| `INVALID_MOBILE`        | Invalid mobile number                          |
+| `MOBILE_ALREADY_EXISTS` | Mobile number already registered               |
+| `EMAIL_ALREADY_EXISTS`  | Email already registered                       |
+| `USER_NOT_FOUND`        | Account does not exist                         |
+| `INVALID_OTP`           | OTP is incorrect                               |
+| `OTP_EXPIRED`           | OTP has expired                                |
+| `OTP_LIMIT_EXCEEDED`    | OTP request limit or cooldown exceeded         |
+| `INVALID_REFRESH_TOKEN` | Refresh token is invalid or revoked            |
+| `REFRESH_TOKEN_EXPIRED` | Refresh token has expired                      |
+| `ACCOUNT_BLOCKED`       | Account has been blocked                       |
 
 ---
 
-# 8. API Summary
+# 10. API Summary
 
-| Method | Endpoint                      | Purpose                                     |
-| ------ | ----------------------------- | ------------------------------------------- |
-| POST   | `/api/auth/signup`            | Register User/Vendor and send OTP           |
-| POST   | `/api/auth/signup/verify-otp` | Verify signup OTP and complete registration |
-| POST   | `/api/auth/signin`            | Request signin OTP                          |
-| POST   | `/api/auth/signin/verify-otp` | Verify signin OTP and complete login        |
-| GET    | `/api/auth/me`                | Fetch current authenticated account profile |
+| Method | Endpoint                      | Purpose                                       |
+| ------ | ----------------------------- | --------------------------------------------- |
+| POST   | `/api/auth/signup`            | Register User/Vendor and send OTP             |
+| POST   | `/api/auth/signup/verify-otp` | Verify signup OTP and complete registration   |
+| POST   | `/api/auth/signin`            | Request signin OTP                            |
+| POST   | `/api/auth/signin/verify-otp` | Verify signin OTP and complete login          |
+| POST   | `/api/auth/resend-otp`        | Resend verification OTP                       |
+| POST   | `/api/auth/refresh-token`     | Refresh access token & rotate refresh token   |
+| GET    | `/api/auth/me`                | Fetch current authenticated account profile   |
 
 ---
 
-# 9. Authentication
+# 11. Authentication
 
-After successful signup or signin, the API returns a **JWT authentication token**.
+After successful signup or signin, the API returns a **JWT access token** and a **refresh token**.
 
-The token should be sent with subsequent protected API requests:
+The access token should be sent with subsequent protected API requests:
 
 ```http
-Authorization: Bearer JWT_TOKEN
+Authorization: Bearer JWT_ACCESS_TOKEN
 ```
+

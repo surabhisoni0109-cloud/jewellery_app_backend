@@ -152,4 +152,32 @@ describe('OtpService', () => {
       expect(mockRedisService.del).toHaveBeenCalledWith('otp:signup:9876543210');
     });
   });
+
+  describe('resendSignupOtp', () => {
+    it('should throw OTP_EXPIRED when no pending signup payload is found in Redis', async () => {
+      mockRedisService.get.mockResolvedValue(null);
+
+      await expect(service.resendSignupOtp('9876543210')).rejects.toThrow(CustomException);
+    });
+
+    it('should generate new OTP and dispatch SMS when pending signup payload exists', async () => {
+      const payload = { type: 'USER', firstName: 'John', mobileNumber: '9876543210' };
+      mockRedisService.get.mockImplementation((key: string) => {
+        if (key === 'otp:signup:9876543210') {
+          return Promise.resolve(JSON.stringify({ hash: 'old_hash', payload }));
+        }
+        return Promise.resolve(null);
+      });
+
+      const res = await service.resendSignupOtp('9876543210');
+
+      expect(res.mobileNumber).toBe('9876543210');
+      expect(mockSmsProvider.sendOtp).toHaveBeenCalled();
+      expect(mockRedisService.set).toHaveBeenCalledWith(
+        'otp:signup:9876543210',
+        expect.any(String),
+        300,
+      );
+    });
+  });
 });

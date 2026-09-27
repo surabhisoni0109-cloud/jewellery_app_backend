@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.AuthSessionResponseDto = exports.OtpResponseDto = exports.UserResponseDto = void 0;
+exports.RefreshTokenResponseDto = exports.AuthSessionResponseDto = exports.OtpResponseDto = exports.UserResponseDto = void 0;
 const swagger_1 = require("@nestjs/swagger");
 const client_1 = require("@prisma/client");
 class UserResponseDto {
@@ -111,4 +111,42 @@ __decorate([
     }),
     __metadata("design:type", String)
 ], AuthSessionResponseDto.prototype, "token", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({
+        example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+        description: 'JWT Bearer Refresh Token',
+    }),
+    __metadata("design:type", String)
+], AuthSessionResponseDto.prototype, "refreshToken", void 0);
+class RefreshTokenResponseDto {
+}
+exports.RefreshTokenResponseDto = RefreshTokenResponseDto;
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+        description: 'Fresh JWT Bearer Access Token',
+    }),
+    __metadata("design:type", String)
+], RefreshTokenResponseDto.prototype, "token", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+        description: 'Rotated JWT Bearer Refresh Token',
+    }),
+    __metadata("design:type", String)
+], RefreshTokenResponseDto.prototype, "refreshToken", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        example: 'Bearer',
+        description: 'Token type',
+    }),
+    __metadata("design:type", String)
+], RefreshTokenResponseDto.prototype, "tokenType", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        example: 900,
+        description: 'Access token expiration in seconds',
+    }),
+    __metadata("design:type", Number)
+], RefreshTokenResponseDto.prototype, "expiresIn", void 0);
 //# sourceMappingURL=auth-response.dto.js.map
