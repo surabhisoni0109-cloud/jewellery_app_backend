@@ -175,9 +175,10 @@ export class AuthController {
     type: ApiErrorResponseDto,
   })
   async getMe(@CurrentUser() user: User) {
+    const profile = await this.authService.getUserProfile(user);
     return {
       message: 'Profile fetched successfully',
-      data: user,
+      data: profile,
     };
   }
 

@@ -1,4 +1,4 @@
-import { UserStatus, UserType } from '@prisma/client';
+import { OnboardingStep, UserStatus, UserType } from '@prisma/client';
 export declare class UserResponseDto {
     id: string;
     userId: string;
@@ -11,6 +11,8 @@ export declare class UserResponseDto {
     isMobileVerified: boolean;
     createdAt: Date;
     updatedAt: Date;
+    isOnboarded: boolean;
+    onboardingStep: OnboardingStep;
 }
 export declare class OtpResponseDto {
     mobileNumber: string;
@@ -26,6 +28,8 @@ export declare class AuthSessionResponseDto {
     email: string;
     token: string;
     refreshToken?: string;
+    isOnboarded: boolean;
+    onboardingStep: OnboardingStep;
 }
 export declare class RefreshTokenResponseDto {
     token: string;

@@ -1,11 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { UserStatus, UserType } from '@prisma/client';
+import { OnboardingStep, UserStatus, UserType } from '@prisma/client';
 import { AuthService } from '../src/services/auth.service';
 import { UsersService } from '../src/services/users.service';
 import { OtpService } from '../src/services/otp.service';
 import { RedisService } from '../src/services/redis.service';
+import { PrismaService } from '../src/services/prisma.service';
 import { OtpPurpose } from '../src/dto/resend-otp.dto';
 import { CustomException } from '../src/common/exceptions/custom-exception';
 
@@ -44,6 +45,12 @@ describe('AuthService', () => {
     get: jest.fn((key: string, defaultVal?: any) => defaultVal),
   };
 
+  const mockPrismaService = {
+    vendorProfile: {
+      findUnique: jest.fn(),
+    },
+  };
+
   beforeEach(async () => {
     jest.clearAllMocks();
 
@@ -55,6 +62,7 @@ describe('AuthService', () => {
         { provide: JwtService, useValue: mockJwtService },
         { provide: RedisService, useValue: mockRedisService },
         { provide: ConfigService, useValue: mockConfigService },
+        { provide: PrismaService, useValue: mockPrismaService },
       ],
     }).compile();
 
@@ -162,7 +170,7 @@ describe('AuthService', () => {
   });
 
   describe('decoupled methods', () => {
-    it('issueSessionAfterVerification should generate valid JWT token with claims', async () => {
+    it('issueSessionAfterVerification should generate valid JWT token with claims and default completed onboarding for buyers', async () => {
       const mockUser = {
         userId: 'USR100001',
         type: UserType.USER,
@@ -172,11 +180,51 @@ describe('AuthService', () => {
       const session = await service.issueSessionAfterVerification(mockUser);
 
       expect(session.token).toBe('mocked_jwt_token_string');
+      expect(session.isOnboarded).toBe(true);
+      expect(session.onboardingStep).toBe(OnboardingStep.COMPLETED);
       expect(mockJwtService.sign).toHaveBeenCalledWith({
         sub: 'USR100001',
         type: UserType.USER,
         mobileNumber: '9876543210',
       });
+    });
+
+    it('issueSessionAfterVerification should include vendor onboarding progress', async () => {
+      const mockVendor = {
+        userId: 'VND100001',
+        type: UserType.VENDOR,
+        mobileNumber: '9876543210',
+      } as any;
+
+      mockPrismaService.vendorProfile.findUnique.mockResolvedValue({
+        isOnboarded: false,
+        onboardingStep: OnboardingStep.STEP_1_DONE,
+      });
+
+      const session = await service.issueSessionAfterVerification(mockVendor);
+
+      expect(session.isOnboarded).toBe(false);
+      expect(session.onboardingStep).toBe(OnboardingStep.STEP_1_DONE);
+    });
+
+    it('getUserProfile should attach onboarding status to profile', async () => {
+      const mockVendor = {
+        userId: 'VND100001',
+        type: UserType.VENDOR,
+        mobileNumber: '9876543210',
+        firstName: 'Vendor',
+      } as any;
+
+      mockPrismaService.vendorProfile.findUnique.mockResolvedValue({
+        isOnboarded: true,
+        onboardingStep: OnboardingStep.COMPLETED,
+      });
+
+      const profile = await service.getUserProfile(mockVendor);
+
+      expect(profile.isOnboarded).toBe(true);
+      expect(profile.onboardingStep).toBe(OnboardingStep.COMPLETED);
+      expect(profile.firstName).toBe('Vendor');
     });
   });
 

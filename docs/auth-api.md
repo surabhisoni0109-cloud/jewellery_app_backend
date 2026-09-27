@@ -102,7 +102,9 @@ After receiving the OTP, the user verifies their mobile number.
     "mobileNumber": "9876543210",
     "email": "yogesh@example.com",
     "token": "JWT_ACCESS_TOKEN",
-    "refreshToken": "JWT_REFRESH_TOKEN"
+    "refreshToken": "JWT_REFRESH_TOKEN",
+    "isOnboarded": true,
+    "onboardingStep": "COMPLETED"
   }
 }
 ```
@@ -194,7 +196,9 @@ The user enters the OTP received on their registered mobile number.
     "mobileNumber": "9876543210",
     "email": "yogesh@example.com",
     "token": "JWT_ACCESS_TOKEN",
-    "refreshToken": "JWT_REFRESH_TOKEN"
+    "refreshToken": "JWT_REFRESH_TOKEN",
+    "isOnboarded": true,
+    "onboardingStep": "COMPLETED"
   }
 }
 ```

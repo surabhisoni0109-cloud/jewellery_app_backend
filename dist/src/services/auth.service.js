@@ -16,19 +16,22 @@ exports.AuthService = void 0;
 const common_1 = require("@nestjs/common");
 const jwt_1 = require("@nestjs/jwt");
 const config_1 = require("@nestjs/config");
+const client_1 = require("@prisma/client");
 const crypto = require("crypto");
 const users_service_1 = require("./users.service");
 const otp_service_1 = require("./otp.service");
 const redis_service_1 = require("./redis.service");
+const prisma_service_1 = require("./prisma.service");
 const resend_otp_dto_1 = require("../dto/resend-otp.dto");
 const custom_exception_1 = require("../common/exceptions/custom-exception");
 let AuthService = class AuthService {
-    constructor(usersService, otpService, jwtService, redisService, configService) {
+    constructor(usersService, otpService, jwtService, redisService, configService, prisma) {
         this.usersService = usersService;
         this.otpService = otpService;
         this.jwtService = jwtService;
         this.redisService = redisService;
         this.configService = configService;
+        this.prisma = prisma;
     }
     get jwtSecret() {
         return this.configService?.get('JWT_SECRET') || 'default_jwt_secret_min_32_chars';
@@ -158,6 +161,38 @@ let AuthService = class AuthService {
     async createAccountAfterVerification(data) {
         return this.usersService.createUser(data);
     }
+    async getOnboardingStatus(user) {
+        if (user.type === client_1.UserType.USER) {
+            return {
+                isOnboarded: true,
+                onboardingStep: client_1.OnboardingStep.COMPLETED,
+            };
+        }
+        if (this.prisma) {
+            const vendorProfile = await this.prisma.vendorProfile.findUnique({
+                where: { userId: user.userId },
+                select: { isOnboarded: true, onboardingStep: true },
+            });
+            if (vendorProfile) {
+                return {
+                    isOnboarded: vendorProfile.isOnboarded,
+                    onboardingStep: vendorProfile.onboardingStep,
+                };
+            }
+        }
+        return {
+            isOnboarded: false,
+            onboardingStep: client_1.OnboardingStep.PENDING,
+        };
+    }
+    async getUserProfile(user) {
+        const onboarding = await this.getOnboardingStatus(user);
+        return {
+            ...user,
+            isOnboarded: onboarding.isOnboarded,
+            onboardingStep: onboarding.onboardingStep,
+        };
+    }
     async issueSessionAfterVerification(user) {
         const payload = {
             sub: user.userId,
@@ -179,6 +214,7 @@ let AuthService = class AuthService {
         if (this.redisService) {
             await this.redisService.set(`refresh_token:${user.userId}:${jti}`, '1', refreshTtlSeconds);
         }
+        const onboarding = await this.getOnboardingStatus(user);
         return {
             userId: user.userId,
             type: user.type.toLowerCase(),
@@ -188,6 +224,8 @@ let AuthService = class AuthService {
             email: user.email,
             token,
             refreshToken,
+            isOnboarded: onboarding.isOnboarded,
+            onboardingStep: onboarding.onboardingStep,
         };
     }
     async refreshToken(dto) {
@@ -258,10 +296,12 @@ exports.AuthService = AuthService = __decorate([
     (0, common_1.Injectable)(),
     __param(3, (0, common_1.Optional)()),
     __param(4, (0, common_1.Optional)()),
+    __param(5, (0, common_1.Optional)()),
     __metadata("design:paramtypes", [users_service_1.UsersService,
         otp_service_1.OtpService,
         jwt_1.JwtService,
         redis_service_1.RedisService,
-        config_1.ConfigService])
+        config_1.ConfigService,
+        prisma_service_1.PrismaService])
 ], AuthService);
 //# sourceMappingURL=auth.service.js.map

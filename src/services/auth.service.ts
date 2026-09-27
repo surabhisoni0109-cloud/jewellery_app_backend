@@ -1,11 +1,12 @@
 import { Injectable, HttpStatus, Optional } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { User, UserType } from '@prisma/client';
+import { OnboardingStep, User, UserType } from '@prisma/client';
 import * as crypto from 'crypto';
 import { UsersService } from './users.service';
 import { OtpService } from './otp.service';
 import { RedisService } from './redis.service';
+import { PrismaService } from './prisma.service';
 import { SignupDto } from '../dto/signup.dto';
 import { SignupVerifyDto } from '../dto/signup-verify.dto';
 import { SigninDto } from '../dto/signin.dto';
@@ -23,6 +24,8 @@ export interface AuthSession {
   email: string;
   token: string;
   refreshToken?: string;
+  isOnboarded: boolean;
+  onboardingStep: OnboardingStep;
 }
 
 export interface RefreshedTokens {
@@ -40,6 +43,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     @Optional() private readonly redisService?: RedisService,
     @Optional() private readonly configService?: ConfigService,
+    @Optional() private readonly prisma?: PrismaService,
   ) {}
 
   private get jwtSecret(): string {
@@ -287,8 +291,52 @@ export class AuthService {
   }
 
   /**
+   * Resolves the onboarding state for a user or vendor.
+   * Regular buyers are always considered onboarded. Vendors reflect their database progress.
+   */
+  async getOnboardingStatus(user: User): Promise<{ isOnboarded: boolean; onboardingStep: OnboardingStep }> {
+    if (user.type === UserType.USER) {
+      return {
+        isOnboarded: true,
+        onboardingStep: OnboardingStep.COMPLETED,
+      };
+    }
+
+    if (this.prisma) {
+      const vendorProfile = await this.prisma.vendorProfile.findUnique({
+        where: { userId: user.userId },
+        select: { isOnboarded: true, onboardingStep: true },
+      });
+
+      if (vendorProfile) {
+        return {
+          isOnboarded: vendorProfile.isOnboarded,
+          onboardingStep: vendorProfile.onboardingStep,
+        };
+      }
+    }
+
+    return {
+      isOnboarded: false,
+      onboardingStep: OnboardingStep.PENDING,
+    };
+  }
+
+  /**
+   * Returns complete user profile including resolved onboarding state.
+   */
+  async getUserProfile(user: User): Promise<User & { isOnboarded: boolean; onboardingStep: OnboardingStep }> {
+    const onboarding = await this.getOnboardingStatus(user);
+    return {
+      ...user,
+      isOnboarded: onboarding.isOnboarded,
+      onboardingStep: onboarding.onboardingStep,
+    };
+  }
+
+  /**
    * Replaceable / Decoupled JWT Session Issuance Method.
-   * Issues JWT session payload matching exact spec: { userId, type, firstName, lastName, mobileNumber, email, token, refreshToken }.
+   * Issues JWT session payload matching exact spec: { userId, type, firstName, lastName, mobileNumber, email, token, refreshToken, isOnboarded, onboardingStep }.
    */
   async issueSessionAfterVerification(user: User): Promise<AuthSession> {
     const payload = {
@@ -316,6 +364,8 @@ export class AuthService {
       await this.redisService.set(`refresh_token:${user.userId}:${jti}`, '1', refreshTtlSeconds);
     }
 
+    const onboarding = await this.getOnboardingStatus(user);
+
     return {
       userId: user.userId,
       type: user.type.toLowerCase(),
@@ -325,6 +375,8 @@ export class AuthService {
       email: user.email,
       token,
       refreshToken,
+      isOnboarded: onboarding.isOnboarded,
+      onboardingStep: onboarding.onboardingStep,
     };
   }
 

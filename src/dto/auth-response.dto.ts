@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { UserStatus, UserType } from '@prisma/client';
+import { OnboardingStep, UserStatus, UserType } from '@prisma/client';
 
 export class UserResponseDto {
   @ApiProperty({ example: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', description: 'Internal UUID' })
@@ -34,6 +34,19 @@ export class UserResponseDto {
 
   @ApiProperty({ example: '2026-09-20T15:45:00.000Z' })
   updatedAt!: Date;
+
+  @ApiProperty({
+    example: false,
+    description: 'Whether onboarding is completed (always true for regular buyers, progress tracked for vendors)',
+  })
+  isOnboarded!: boolean;
+
+  @ApiProperty({
+    enum: OnboardingStep,
+    example: 'PENDING',
+    description: 'Current onboarding progress step (PENDING, STEP_1_DONE, STEP_2_DONE, COMPLETED)',
+  })
+  onboardingStep!: OnboardingStep;
 }
 
 export class OtpResponseDto {
@@ -80,6 +93,19 @@ export class AuthSessionResponseDto {
     description: 'JWT Bearer Refresh Token',
   })
   refreshToken?: string;
+
+  @ApiProperty({
+    example: false,
+    description: 'Whether onboarding is completed (always true for regular buyers, progress tracked for vendors)',
+  })
+  isOnboarded!: boolean;
+
+  @ApiProperty({
+    enum: OnboardingStep,
+    example: 'PENDING',
+    description: 'Current onboarding progress step (PENDING, STEP_1_DONE, STEP_2_DONE, COMPLETED)',
+  })
+  onboardingStep!: OnboardingStep;
 }
 
 export class RefreshTokenResponseDto {

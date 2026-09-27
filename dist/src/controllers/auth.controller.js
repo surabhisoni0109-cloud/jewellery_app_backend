@@ -60,9 +60,10 @@ let AuthController = class AuthController {
         };
     }
     async getMe(user) {
+        const profile = await this.authService.getUserProfile(user);
         return {
             message: 'Profile fetched successfully',
-            data: user,
+            data: profile,
         };
     }
     async resendOtp(resendOtpDto) {

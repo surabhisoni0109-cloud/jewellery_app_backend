@@ -39,6 +39,9 @@ export declare class AuthController {
             isMobileVerified: boolean;
             createdAt: Date;
             updatedAt: Date;
+        } & {
+            isOnboarded: boolean;
+            onboardingStep: import(".prisma/client").OnboardingStep;
         };
     }>;
     resendOtp(resendOtpDto: ResendOtpDto): Promise<{

@@ -59,6 +59,21 @@ __decorate([
     (0, swagger_1.ApiProperty)({ example: '2026-09-20T15:45:00.000Z' }),
     __metadata("design:type", Date)
 ], UserResponseDto.prototype, "updatedAt", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        example: false,
+        description: 'Whether onboarding is completed (always true for regular buyers, progress tracked for vendors)',
+    }),
+    __metadata("design:type", Boolean)
+], UserResponseDto.prototype, "isOnboarded", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        enum: client_1.OnboardingStep,
+        example: 'PENDING',
+        description: 'Current onboarding progress step (PENDING, STEP_1_DONE, STEP_2_DONE, COMPLETED)',
+    }),
+    __metadata("design:type", String)
+], UserResponseDto.prototype, "onboardingStep", void 0);
 class OtpResponseDto {
 }
 exports.OtpResponseDto = OtpResponseDto;
@@ -118,6 +133,21 @@ __decorate([
     }),
     __metadata("design:type", String)
 ], AuthSessionResponseDto.prototype, "refreshToken", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        example: false,
+        description: 'Whether onboarding is completed (always true for regular buyers, progress tracked for vendors)',
+    }),
+    __metadata("design:type", Boolean)
+], AuthSessionResponseDto.prototype, "isOnboarded", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        enum: client_1.OnboardingStep,
+        example: 'PENDING',
+        description: 'Current onboarding progress step (PENDING, STEP_1_DONE, STEP_2_DONE, COMPLETED)',
+    }),
+    __metadata("design:type", String)
+], AuthSessionResponseDto.prototype, "onboardingStep", void 0);
 class RefreshTokenResponseDto {
 }
 exports.RefreshTokenResponseDto = RefreshTokenResponseDto;
