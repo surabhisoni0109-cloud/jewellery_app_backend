@@ -1,0 +1,38 @@
+import { PrismaService } from './prisma.service';
+import { DashboardPeriod, DashboardAnalyticsResponseDto, DashboardGraphResponseDto, EnquiriesListResponseDto, RatingsListResponseDto, RatingSummaryResponseDto } from '../dto/vendor-dashboard.dto';
+export declare class VendorDashboardService {
+    private readonly prisma;
+    constructor(prisma: PrismaService);
+    getVendorProfile(userId: string): Promise<{
+        id: string;
+        userId: string;
+        createdAt: Date;
+        updatedAt: Date;
+        isOnboarded: boolean;
+        onboardingStep: import(".prisma/client").$Enums.OnboardingStep;
+        gender: import(".prisma/client").$Enums.Gender | null;
+        dob: Date | null;
+        profilePicture: string | null;
+        storeName: string | null;
+        storeDescription: string | null;
+        storeLogo: string | null;
+        storeCoverImages: string[];
+        storeLocation: import("@prisma/client/runtime/library").JsonValue | null;
+        jewelleryStartingPrice: import("@prisma/client/runtime/library").Decimal | null;
+        storeWebsite: string | null;
+        storeContactNumber: string | null;
+        storeEmail: string | null;
+        storeOpeningTime: string | null;
+        storeClosingTime: string | null;
+        storeFoundedYear: number | null;
+    }>;
+    getAnalytics(userId: string): Promise<DashboardAnalyticsResponseDto>;
+    getViewsGraph(userId: string, period?: DashboardPeriod): Promise<DashboardGraphResponseDto>;
+    getEnquiriesGraph(userId: string, period?: DashboardPeriod): Promise<DashboardGraphResponseDto>;
+    getEnquiries(userId: string, page?: number, limit?: number): Promise<EnquiriesListResponseDto>;
+    getRatings(userId: string, page?: number, limit?: number): Promise<RatingsListResponseDto>;
+    getRatingSummary(userId: string): Promise<RatingSummaryResponseDto>;
+    private buildTimeBuckets;
+    private formatDate;
+    private formatTime;
+}

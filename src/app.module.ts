@@ -9,6 +9,7 @@ import { OtpModule } from './modules/otp.module';
 import { UsersModule } from './modules/users.module';
 import { AuthModule } from './modules/auth.module';
 import { VendorOnboardingModule } from './modules/vendor-onboarding.module';
+import { VendorDashboardModule } from './modules/vendor-dashboard.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { VendorOnboardingModule } from './modules/vendor-onboarding.module';
     UsersModule,
     AuthModule,
     VendorOnboardingModule,
+    VendorDashboardModule,
   ],
 })
 export class AppModule {}

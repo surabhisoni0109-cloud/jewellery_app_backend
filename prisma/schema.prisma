@@ -84,6 +84,9 @@ model VendorProfile {
   updatedAt        DateTime       @updatedAt
 
   jewelleryShowcase JewelleryShowcase[]
+  storeViews        VendorStoreView[]
+  enquiries         VendorEnquiry[]
+  ratings           VendorRating[]
 
   @@index([userId])
 }
@@ -101,6 +104,52 @@ model JewelleryShowcase {
   updatedAt       DateTime      @updatedAt
 
   vendorProfile   VendorProfile @relation(fields: [vendorProfileId], references: [id], onDelete: Cascade)
+  enquiries       VendorEnquiry[]
 
   @@index([vendorProfileId])
+}
+
+model VendorStoreView {
+  id              String        @id @default(uuid())
+  vendorProfileId String
+  viewerUserId    String?
+  createdAt       DateTime      @default(now())
+
+  vendorProfile   VendorProfile @relation(fields: [vendorProfileId], references: [id], onDelete: Cascade)
+
+  @@index([vendorProfileId, createdAt])
+}
+
+model VendorEnquiry {
+  id                   String             @id @default(uuid())
+  enquiryId            String             @unique
+  vendorProfileId      String
+  customerId           String?
+  customerName         String
+  customerMobile       String
+  customerProfileImage String?
+  message              String
+  jewelleryId          String?
+  createdAt            DateTime           @default(now())
+
+  vendorProfile        VendorProfile      @relation(fields: [vendorProfileId], references: [id], onDelete: Cascade)
+  jewellery            JewelleryShowcase? @relation(fields: [jewelleryId], references: [id], onDelete: SetNull)
+
+  @@index([vendorProfileId, createdAt])
+}
+
+model VendorRating {
+  id                   String        @id @default(uuid())
+  vendorProfileId      String
+  customerId           String?
+  customerName         String
+  customerProfileImage String?
+  rating               Int
+  review               String?
+  createdAt            DateTime      @default(now())
+
+  vendorProfile        VendorProfile @relation(fields: [vendorProfileId], references: [id], onDelete: Cascade)
+
+  @@index([vendorProfileId, rating])
+  @@index([vendorProfileId, createdAt])
 }
