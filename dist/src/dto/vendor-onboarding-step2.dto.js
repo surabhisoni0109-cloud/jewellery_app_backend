@@ -80,7 +80,10 @@ __decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
     (0, class_validator_1.MaxLength)(100),
-    (0, class_transformer_1.Transform)(({ value }) => (typeof value === 'string' ? value.trim() : value)),
+    (0, class_transformer_1.Transform)(({ obj, value }) => {
+        const val = value ?? obj?.storename ?? obj?.store_name;
+        return typeof val === 'string' ? val.trim() : val;
+    }),
     __metadata("design:type", String)
 ], VendorOnboardingStep2Dto.prototype, "storeName", void 0);
 __decorate([
@@ -123,10 +126,46 @@ __decorate([
     __metadata("design:type", String)
 ], VendorOnboardingStep2Dto.prototype, "storeContactNumber", void 0);
 __decorate([
+    (0, swagger_1.ApiProperty)({
+        example: 'Rahul Sharma',
+        description: 'Name of the store owner (optional)',
+        required: false,
+    }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.MaxLength)(100),
+    (0, class_transformer_1.Transform)(({ obj, value }) => {
+        const val = value ?? obj?.storeownername ?? obj?.store_owner_name;
+        return typeof val === 'string' ? val.trim() : val;
+    }),
+    __metadata("design:type", String)
+], VendorOnboardingStep2Dto.prototype, "storeOwnerName", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        example: '9876543210',
+        description: '10-digit Indian WhatsApp number for the store (optional)',
+        required: false,
+    }),
+    (0, indian_mobile_validator_1.IsIndianMobile)({ message: 'whatsappNumber must be a valid 10-digit Indian mobile number' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Transform)(({ obj, value }) => {
+        const val = value ??
+            obj?.storeWhatsappNumber ??
+            obj?.store_whatsapp_number ??
+            obj?.whatsapp_number ??
+            obj?.storewhatsappnumber;
+        return typeof val === 'string' ? val.trim() : val;
+    }),
+    __metadata("design:type", String)
+], VendorOnboardingStep2Dto.prototype, "whatsappNumber", void 0);
+__decorate([
     (0, swagger_1.ApiProperty)({ example: 'contact@sonijewellers.com', description: 'Store email address', required: true }),
     (0, class_validator_1.IsEmail)({}, { message: 'storeEmail must be a valid email address' }),
     (0, class_validator_1.IsNotEmpty)(),
-    (0, class_transformer_1.Transform)(({ value }) => (typeof value === 'string' ? value.trim().toLowerCase() : value)),
+    (0, class_transformer_1.Transform)(({ obj, value }) => {
+        const val = value ?? obj?.storeemail ?? obj?.store_email;
+        return typeof val === 'string' ? val.trim().toLowerCase() : val;
+    }),
     __metadata("design:type", String)
 ], VendorOnboardingStep2Dto.prototype, "storeEmail", void 0);
 __decorate([

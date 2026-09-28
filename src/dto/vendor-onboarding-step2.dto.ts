@@ -69,7 +69,10 @@ export class VendorOnboardingStep2Dto {
   @IsString()
   @IsNotEmpty()
   @MaxLength(100)
-  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @Transform(({ obj, value }) => {
+    const val = value ?? obj?.storename ?? obj?.store_name;
+    return typeof val === 'string' ? val.trim() : val;
+  })
   storeName!: string;
 
   @ApiProperty({ example: 'Premium handcrafted jewellery since 1985', description: 'Store description (max 1000 chars)', required: true })
@@ -106,10 +109,45 @@ export class VendorOnboardingStep2Dto {
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   storeContactNumber!: string;
 
+  @ApiProperty({
+    example: 'Rahul Sharma',
+    description: 'Name of the store owner (optional)',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  @MaxLength(100)
+  @Transform(({ obj, value }) => {
+    const val = value ?? obj?.storeownername ?? obj?.store_owner_name;
+    return typeof val === 'string' ? val.trim() : val;
+  })
+  storeOwnerName?: string;
+
+  @ApiProperty({
+    example: '9876543210',
+    description: '10-digit Indian WhatsApp number for the store (optional)',
+    required: false,
+  })
+  @IsIndianMobile({ message: 'whatsappNumber must be a valid 10-digit Indian mobile number' })
+  @IsOptional()
+  @Transform(({ obj, value }) => {
+    const val =
+      value ??
+      obj?.storeWhatsappNumber ??
+      obj?.store_whatsapp_number ??
+      obj?.whatsapp_number ??
+      obj?.storewhatsappnumber;
+    return typeof val === 'string' ? val.trim() : val;
+  })
+  whatsappNumber?: string;
+
   @ApiProperty({ example: 'contact@sonijewellers.com', description: 'Store email address', required: true })
   @IsEmail({}, { message: 'storeEmail must be a valid email address' })
   @IsNotEmpty()
-  @Transform(({ value }) => (typeof value === 'string' ? value.trim().toLowerCase() : value))
+  @Transform(({ obj, value }) => {
+    const val = value ?? obj?.storeemail ?? obj?.store_email;
+    return typeof val === 'string' ? val.trim().toLowerCase() : val;
+  })
   storeEmail!: string;
 
   @ApiProperty({ example: '09:00', description: 'Store opening time in HH:MM (24-hr) format', required: true })

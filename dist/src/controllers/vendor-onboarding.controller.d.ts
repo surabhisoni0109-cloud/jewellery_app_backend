@@ -48,6 +48,7 @@ export declare class VendorOnboardingController {
         message: string;
         data: {
             onboardingStep: import(".prisma/client").$Enums.OnboardingStep;
+            isOnboarded: boolean;
             storeName: string | null;
             storeDescription: string | null;
             storeLogo: string | null;
@@ -56,6 +57,8 @@ export declare class VendorOnboardingController {
             jewelleryStartingPrice: number | null;
             storeWebsite: string | null;
             storeContactNumber: string | null;
+            storeOwnerName: any;
+            whatsappNumber: any;
             storeEmail: string | null;
             storeOpeningTime: string | null;
             storeClosingTime: string | null;
@@ -69,6 +72,7 @@ export declare class VendorOnboardingController {
         message: string;
         data: {
             onboardingStep: import(".prisma/client").$Enums.OnboardingStep;
+            isOnboarded: boolean;
             storeName: string | null;
             storeDescription: string | null;
             storeLogo: string | null;
@@ -77,6 +81,8 @@ export declare class VendorOnboardingController {
             jewelleryStartingPrice: number | null;
             storeWebsite: string | null;
             storeContactNumber: string | null;
+            storeOwnerName: any;
+            whatsappNumber: any;
             storeEmail: string | null;
             storeOpeningTime: string | null;
             storeClosingTime: string | null;

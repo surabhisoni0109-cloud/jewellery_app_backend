@@ -38,7 +38,7 @@ export class VendorOnboardingService {
       PENDING: [],
       STEP_1_DONE: [1],
       STEP_2_DONE: [1, 2],
-      COMPLETED: [1, 2, 3],
+      COMPLETED: [1, 2],
     };
     return map[step] ?? [];
   }
@@ -50,15 +50,16 @@ export class VendorOnboardingService {
     const map: Record<OnboardingStep, number | null> = {
       PENDING: 1,
       STEP_1_DONE: 2,
-      STEP_2_DONE: 3,
+      STEP_2_DONE: null,
       COMPLETED: null,
     };
-    return map[step] ?? 1;
+    return step in map ? map[step] : 1;
   }
 
   /**
    * Determines new OnboardingStep after completing a given step number.
    * Handles flexible ordering — only upgrades, never downgrades.
+   * Step 2 now completes onboarding (marking COMPLETED & isOnboarded = true).
    */
   private resolveNewOnboardingStep(
     current: OnboardingStep,
@@ -80,9 +81,7 @@ export class VendorOnboardingService {
     const targetStep: OnboardingStep =
       completedStep === 1
         ? OnboardingStep.STEP_1_DONE
-        : completedStep === 2
-          ? OnboardingStep.STEP_2_DONE
-          : OnboardingStep.COMPLETED;
+        : OnboardingStep.COMPLETED;
 
     // Only upgrade, never downgrade
     const currentIdx = stepOrder.indexOf(current);
@@ -178,6 +177,7 @@ export class VendorOnboardingService {
 
     return {
       onboardingStep: profile.onboardingStep,
+      isOnboarded: profile.isOnboarded,
       storeName: profile.storeName,
       storeDescription: profile.storeDescription,
       storeLogo: profile.storeLogo,
@@ -188,6 +188,8 @@ export class VendorOnboardingService {
         : null,
       storeWebsite: profile.storeWebsite,
       storeContactNumber: profile.storeContactNumber,
+      storeOwnerName: (profile as any).storeOwnerName ?? null,
+      whatsappNumber: (profile as any).whatsappNumber ?? null,
       storeEmail: profile.storeEmail,
       storeOpeningTime: profile.storeOpeningTime,
       storeClosingTime: profile.storeClosingTime,
@@ -267,6 +269,8 @@ export class VendorOnboardingService {
         jewelleryStartingPrice: dto.jewelleryStartingPrice,
         storeWebsite: dto.storeWebsite ?? null,
         storeContactNumber: dto.storeContactNumber,
+        storeOwnerName: dto.storeOwnerName ?? undefined,
+        whatsappNumber: dto.whatsappNumber ?? undefined,
         storeEmail: dto.storeEmail,
         storeOpeningTime: dto.storeOpeningTime,
         storeClosingTime: dto.storeClosingTime,
@@ -275,11 +279,12 @@ export class VendorOnboardingService {
         storeCoverImages: mergedCoverImages,
         onboardingStep,
         isOnboarded,
-      },
+      } as any,
     });
 
     return {
       onboardingStep: updated.onboardingStep,
+      isOnboarded: updated.isOnboarded,
       storeName: updated.storeName,
       storeDescription: updated.storeDescription,
       storeLogo: updated.storeLogo,
@@ -290,6 +295,8 @@ export class VendorOnboardingService {
         : null,
       storeWebsite: updated.storeWebsite,
       storeContactNumber: updated.storeContactNumber,
+      storeOwnerName: (updated as any).storeOwnerName ?? null,
+      whatsappNumber: (updated as any).whatsappNumber ?? null,
       storeEmail: updated.storeEmail,
       storeOpeningTime: updated.storeOpeningTime,
       storeClosingTime: updated.storeClosingTime,

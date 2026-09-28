@@ -16,6 +16,8 @@ export declare class VendorOnboardingStep2Dto {
     jewelleryStartingPrice: number;
     storeWebsite?: string;
     storeContactNumber: string;
+    storeOwnerName?: string;
+    whatsappNumber?: string;
     storeEmail: string;
     storeOpeningTime: string;
     storeClosingTime: string;

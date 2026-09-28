@@ -11,6 +11,7 @@ export declare class Step1ResponseDto {
 }
 export declare class Step2ResponseDto {
     onboardingStep: OnboardingStep;
+    isOnboarded: boolean;
     storeName: string;
     storeDescription: string | null;
     storeLogo: string | null;
@@ -19,6 +20,8 @@ export declare class Step2ResponseDto {
     jewelleryStartingPrice: number | null;
     storeWebsite: string | null;
     storeContactNumber: string | null;
+    storeOwnerName: string | null;
+    whatsappNumber: string | null;
     storeEmail: string | null;
     storeOpeningTime: string | null;
     storeClosingTime: string | null;

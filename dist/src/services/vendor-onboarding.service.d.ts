@@ -33,6 +33,7 @@ export declare class VendorOnboardingService {
     }>;
     getStep2(userId: string): Promise<{
         onboardingStep: import(".prisma/client").$Enums.OnboardingStep;
+        isOnboarded: boolean;
         storeName: string | null;
         storeDescription: string | null;
         storeLogo: string | null;
@@ -41,6 +42,8 @@ export declare class VendorOnboardingService {
         jewelleryStartingPrice: number | null;
         storeWebsite: string | null;
         storeContactNumber: string | null;
+        storeOwnerName: any;
+        whatsappNumber: any;
         storeEmail: string | null;
         storeOpeningTime: string | null;
         storeClosingTime: string | null;
@@ -48,6 +51,7 @@ export declare class VendorOnboardingService {
     }>;
     updateStep2(userId: string, dto: VendorOnboardingStep2Dto, storeLogoFile?: Express.Multer.File, storeCoverFiles?: Express.Multer.File[]): Promise<{
         onboardingStep: import(".prisma/client").$Enums.OnboardingStep;
+        isOnboarded: boolean;
         storeName: string | null;
         storeDescription: string | null;
         storeLogo: string | null;
@@ -56,6 +60,8 @@ export declare class VendorOnboardingService {
         jewelleryStartingPrice: number | null;
         storeWebsite: string | null;
         storeContactNumber: string | null;
+        storeOwnerName: any;
+        whatsappNumber: any;
         storeEmail: string | null;
         storeOpeningTime: string | null;
         storeClosingTime: string | null;

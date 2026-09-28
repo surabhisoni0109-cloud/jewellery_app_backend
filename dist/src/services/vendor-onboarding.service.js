@@ -33,7 +33,7 @@ let VendorOnboardingService = class VendorOnboardingService {
             PENDING: [],
             STEP_1_DONE: [1],
             STEP_2_DONE: [1, 2],
-            COMPLETED: [1, 2, 3],
+            COMPLETED: [1, 2],
         };
         return map[step] ?? [];
     }
@@ -41,10 +41,10 @@ let VendorOnboardingService = class VendorOnboardingService {
         const map = {
             PENDING: 1,
             STEP_1_DONE: 2,
-            STEP_2_DONE: 3,
+            STEP_2_DONE: null,
             COMPLETED: null,
         };
-        return map[step] ?? 1;
+        return step in map ? map[step] : 1;
     }
     resolveNewOnboardingStep(current, completedStep, isOnboarded) {
         if (current === client_1.OnboardingStep.COMPLETED) {
@@ -58,9 +58,7 @@ let VendorOnboardingService = class VendorOnboardingService {
         ];
         const targetStep = completedStep === 1
             ? client_1.OnboardingStep.STEP_1_DONE
-            : completedStep === 2
-                ? client_1.OnboardingStep.STEP_2_DONE
-                : client_1.OnboardingStep.COMPLETED;
+            : client_1.OnboardingStep.COMPLETED;
         const currentIdx = stepOrder.indexOf(current);
         const targetIdx = stepOrder.indexOf(targetStep);
         const newStep = targetIdx > currentIdx ? targetStep : current;
@@ -122,6 +120,7 @@ let VendorOnboardingService = class VendorOnboardingService {
         const profile = await this.getOrCreateProfile(userId);
         return {
             onboardingStep: profile.onboardingStep,
+            isOnboarded: profile.isOnboarded,
             storeName: profile.storeName,
             storeDescription: profile.storeDescription,
             storeLogo: profile.storeLogo,
@@ -132,6 +131,8 @@ let VendorOnboardingService = class VendorOnboardingService {
                 : null,
             storeWebsite: profile.storeWebsite,
             storeContactNumber: profile.storeContactNumber,
+            storeOwnerName: profile.storeOwnerName ?? null,
+            whatsappNumber: profile.whatsappNumber ?? null,
             storeEmail: profile.storeEmail,
             storeOpeningTime: profile.storeOpeningTime,
             storeClosingTime: profile.storeClosingTime,
@@ -175,6 +176,8 @@ let VendorOnboardingService = class VendorOnboardingService {
                 jewelleryStartingPrice: dto.jewelleryStartingPrice,
                 storeWebsite: dto.storeWebsite ?? null,
                 storeContactNumber: dto.storeContactNumber,
+                storeOwnerName: dto.storeOwnerName ?? undefined,
+                whatsappNumber: dto.whatsappNumber ?? undefined,
                 storeEmail: dto.storeEmail,
                 storeOpeningTime: dto.storeOpeningTime,
                 storeClosingTime: dto.storeClosingTime,
@@ -187,6 +190,7 @@ let VendorOnboardingService = class VendorOnboardingService {
         });
         return {
             onboardingStep: updated.onboardingStep,
+            isOnboarded: updated.isOnboarded,
             storeName: updated.storeName,
             storeDescription: updated.storeDescription,
             storeLogo: updated.storeLogo,
@@ -197,6 +201,8 @@ let VendorOnboardingService = class VendorOnboardingService {
                 : null,
             storeWebsite: updated.storeWebsite,
             storeContactNumber: updated.storeContactNumber,
+            storeOwnerName: updated.storeOwnerName ?? null,
+            whatsappNumber: updated.whatsappNumber ?? null,
             storeEmail: updated.storeEmail,
             storeOpeningTime: updated.storeOpeningTime,
             storeClosingTime: updated.storeClosingTime,

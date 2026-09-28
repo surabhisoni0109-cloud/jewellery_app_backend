@@ -71,6 +71,8 @@ model VendorProfile {
   jewelleryStartingPrice Decimal? @db.Decimal(10, 2)
   storeWebsite         String?
   storeContactNumber   String?
+  storeOwnerName       String?
+  whatsappNumber       String?
   storeEmail           String?
   storeOpeningTime     String?
   storeClosingTime     String?

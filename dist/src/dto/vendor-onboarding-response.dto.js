@@ -51,9 +51,13 @@ class Step2ResponseDto {
 }
 exports.Step2ResponseDto = Step2ResponseDto;
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'STEP_2_DONE', enum: client_1.OnboardingStep }),
+    (0, swagger_1.ApiProperty)({ example: 'COMPLETED', enum: client_1.OnboardingStep }),
     __metadata("design:type", String)
 ], Step2ResponseDto.prototype, "onboardingStep", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ example: true }),
+    __metadata("design:type", Boolean)
+], Step2ResponseDto.prototype, "isOnboarded", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ example: 'Soni Jewellers' }),
     __metadata("design:type", String)
@@ -86,6 +90,14 @@ __decorate([
     (0, swagger_1.ApiProperty)({ example: '9876543210', nullable: true }),
     __metadata("design:type", Object)
 ], Step2ResponseDto.prototype, "storeContactNumber", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ example: 'Rahul Sharma', nullable: true }),
+    __metadata("design:type", Object)
+], Step2ResponseDto.prototype, "storeOwnerName", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ example: '9876543210', nullable: true }),
+    __metadata("design:type", Object)
+], Step2ResponseDto.prototype, "whatsappNumber", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ example: 'store@sonijewellers.com', nullable: true }),
     __metadata("design:type", Object)

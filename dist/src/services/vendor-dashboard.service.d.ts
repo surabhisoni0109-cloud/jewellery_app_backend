@@ -21,6 +21,8 @@ export declare class VendorDashboardService {
         jewelleryStartingPrice: import("@prisma/client/runtime/library").Decimal | null;
         storeWebsite: string | null;
         storeContactNumber: string | null;
+        storeOwnerName: string | null;
+        whatsappNumber: string | null;
         storeEmail: string | null;
         storeOpeningTime: string | null;
         storeClosingTime: string | null;

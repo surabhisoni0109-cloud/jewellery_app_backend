@@ -32,8 +32,11 @@ export class Step1ResponseDto {
 // ── Step 2 Response ────────────────────────────────────────────────────────
 
 export class Step2ResponseDto {
-  @ApiProperty({ example: 'STEP_2_DONE', enum: OnboardingStep })
+  @ApiProperty({ example: 'COMPLETED', enum: OnboardingStep })
   onboardingStep!: OnboardingStep;
+
+  @ApiProperty({ example: true })
+  isOnboarded!: boolean;
 
   @ApiProperty({ example: 'Soni Jewellers' })
   storeName!: string;
@@ -58,6 +61,12 @@ export class Step2ResponseDto {
 
   @ApiProperty({ example: '9876543210', nullable: true })
   storeContactNumber!: string | null;
+
+  @ApiProperty({ example: 'Rahul Sharma', nullable: true })
+  storeOwnerName!: string | null;
+
+  @ApiProperty({ example: '9876543210', nullable: true })
+  whatsappNumber!: string | null;
 
   @ApiProperty({ example: 'store@sonijewellers.com', nullable: true })
   storeEmail!: string | null;
