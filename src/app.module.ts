@@ -10,6 +10,7 @@ import { UsersModule } from './modules/users.module';
 import { AuthModule } from './modules/auth.module';
 import { VendorOnboardingModule } from './modules/vendor-onboarding.module';
 import { VendorDashboardModule } from './modules/vendor-dashboard.module';
+import { AdminModule } from './modules/admin.module';
 
 @Module({
   imports: [
@@ -31,6 +32,8 @@ import { VendorDashboardModule } from './modules/vendor-dashboard.module';
     AuthModule,
     VendorOnboardingModule,
     VendorDashboardModule,
+    AdminModule,
   ],
 })
 export class AppModule {}
+

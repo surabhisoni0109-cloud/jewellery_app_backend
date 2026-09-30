@@ -1,11 +1,30 @@
 import { PrismaClient, UserStatus, UserType } from '@prisma/client';
+import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
 async function main() {
   console.log('Seeding initial marketplace user records...');
 
-  // Seed sample buyer account
+  // ── Seed default admin ─────────────────────────────────────────────
+  const adminEmail = 'admin@jewellery.com';
+  const existingAdmin = await prisma.admin.findUnique({ where: { email: adminEmail } });
+
+  if (!existingAdmin) {
+    const hashedPassword = await bcrypt.hash('Admin@123', 12);
+    const admin = await prisma.admin.create({
+      data: {
+        name: 'Super Admin',
+        email: adminEmail,
+        password: hashedPassword,
+      },
+    });
+    console.log(`Seeded Admin: ${admin.name} (${admin.email}) — Password: Admin@123`);
+  } else {
+    console.log('Default admin already exists — skipping.');
+  }
+
+  // ── Seed sample buyer account ──────────────────────────────────────
   const sampleUser = await prisma.user.upsert({
     where: {
       mobileNumber_type: {
@@ -28,7 +47,7 @@ async function main() {
 
   console.log(`Seeded Buyer User: ${sampleUser.userId} (${sampleUser.firstName} ${sampleUser.lastName})`);
 
-  // Seed sample vendor account
+  // ── Seed sample vendor account ─────────────────────────────────────
   const sampleVendor = await prisma.user.upsert({
     where: {
       mobileNumber_type: {
@@ -61,3 +80,4 @@ main()
     await prisma.$disconnect();
     process.exit(1);
   });
+
