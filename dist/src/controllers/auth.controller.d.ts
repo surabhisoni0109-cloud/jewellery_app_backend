@@ -28,9 +28,9 @@ export declare class AuthController {
     getMe(user: User): Promise<{
         message: string;
         data: {
+            type: import(".prisma/client").$Enums.UserType;
             id: string;
             userId: string;
-            type: import(".prisma/client").$Enums.UserType;
             firstName: string;
             lastName: string;
             mobileNumber: string;

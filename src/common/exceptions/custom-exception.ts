@@ -24,7 +24,10 @@ export type ErrorCode =
   | 'SHOWCASE_ITEM_NOT_FOUND'
   | 'SHOWCASE_LIMIT_REACHED'
   | 'INVALID_ITEMS'
-  | 'VALIDATION_ERROR';
+  | 'VALIDATION_ERROR'
+  | 'INVALID_CREDENTIALS'
+  | 'NOT_FOUND'
+  | 'EMAIL_TAKEN';
 
 
 export class CustomException extends HttpException {

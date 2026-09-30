@@ -19,6 +19,7 @@ const users_module_1 = require("./modules/users.module");
 const auth_module_1 = require("./modules/auth.module");
 const vendor_onboarding_module_1 = require("./modules/vendor-onboarding.module");
 const vendor_dashboard_module_1 = require("./modules/vendor-dashboard.module");
+const admin_module_1 = require("./modules/admin.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -43,6 +44,7 @@ exports.AppModule = AppModule = __decorate([
             auth_module_1.AuthModule,
             vendor_onboarding_module_1.VendorOnboardingModule,
             vendor_dashboard_module_1.VendorDashboardModule,
+            admin_module_1.AdminModule,
         ],
     })
 ], AppModule);

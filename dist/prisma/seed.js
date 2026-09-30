@@ -1,9 +1,26 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const client_1 = require("@prisma/client");
+const bcrypt = require("bcryptjs");
 const prisma = new client_1.PrismaClient();
 async function main() {
     console.log('Seeding initial marketplace user records...');
+    const adminEmail = 'admin@jewellery.com';
+    const existingAdmin = await prisma.admin.findUnique({ where: { email: adminEmail } });
+    if (!existingAdmin) {
+        const hashedPassword = await bcrypt.hash('Admin@123', 12);
+        const admin = await prisma.admin.create({
+            data: {
+                name: 'Super Admin',
+                email: adminEmail,
+                password: hashedPassword,
+            },
+        });
+        console.log(`Seeded Admin: ${admin.name} (${admin.email}) — Password: Admin@123`);
+    }
+    else {
+        console.log('Default admin already exists — skipping.');
+    }
     const sampleUser = await prisma.user.upsert({
         where: {
             mobileNumber_type: {

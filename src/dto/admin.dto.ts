@@ -11,12 +11,12 @@ export class AdminLoginDto {
   @ApiProperty({ example: 'admin@jewellery.com' })
   @IsEmail({}, { message: 'Please provide a valid email address' })
   @IsNotEmpty()
-  email: string;
+  email!: string;
 
   @ApiProperty({ example: 'Admin@123' })
   @IsString()
   @IsNotEmpty()
-  password: string;
+  password!: string;
 }
 
 export class AdminUpdateProfileDto {
@@ -35,11 +35,11 @@ export class AdminChangePasswordDto {
   @ApiProperty({ example: 'Admin@123' })
   @IsString()
   @IsNotEmpty()
-  currentPassword: string;
+  currentPassword!: string;
 
   @ApiProperty({ example: 'NewAdmin@456' })
   @IsString()
   @IsNotEmpty()
   @MinLength(6, { message: 'New password must be at least 6 characters' })
-  newPassword: string;
+  newPassword!: string;
 }
