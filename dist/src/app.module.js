@@ -20,6 +20,8 @@ const auth_module_1 = require("./modules/auth.module");
 const vendor_onboarding_module_1 = require("./modules/vendor-onboarding.module");
 const vendor_dashboard_module_1 = require("./modules/vendor-dashboard.module");
 const admin_module_1 = require("./modules/admin.module");
+const notification_module_1 = require("./modules/notification.module");
+const content_module_1 = require("./modules/content.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -45,6 +47,8 @@ exports.AppModule = AppModule = __decorate([
             vendor_onboarding_module_1.VendorOnboardingModule,
             vendor_dashboard_module_1.VendorDashboardModule,
             admin_module_1.AdminModule,
+            notification_module_1.NotificationModule,
+            content_module_1.ContentModule,
         ],
     })
 ], AppModule);

@@ -111,6 +111,27 @@ class EnvironmentVariables {
   @IsString()
   @IsOptional()
   AWS_S3_BUCKET_NAME: string = '';
+
+  // Firebase Push Notifications
+  @IsString()
+  @IsOptional()
+  FIREBASE_PROJECT_ID?: string;
+
+  @IsString()
+  @IsOptional()
+  FIREBASE_CLIENT_EMAIL?: string;
+
+  @IsString()
+  @IsOptional()
+  FIREBASE_PRIVATE_KEY?: string;
+
+  @IsString()
+  @IsOptional()
+  FIREBASE_SERVICE_ACCOUNT_PATH?: string;
+
+  @IsString()
+  @IsOptional()
+  FIREBASE_SERVICE_ACCOUNT_JSON?: string;
 }
 
 export function validate(config: Record<string, unknown>): EnvironmentVariables {

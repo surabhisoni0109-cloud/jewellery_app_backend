@@ -11,6 +11,8 @@ import { AuthModule } from './modules/auth.module';
 import { VendorOnboardingModule } from './modules/vendor-onboarding.module';
 import { VendorDashboardModule } from './modules/vendor-dashboard.module';
 import { AdminModule } from './modules/admin.module';
+import { NotificationModule } from './modules/notification.module';
+import { ContentModule } from './modules/content.module';
 
 @Module({
   imports: [
@@ -33,6 +35,8 @@ import { AdminModule } from './modules/admin.module';
     VendorOnboardingModule,
     VendorDashboardModule,
     AdminModule,
+    NotificationModule,
+    ContentModule,
   ],
 })
 export class AppModule {}

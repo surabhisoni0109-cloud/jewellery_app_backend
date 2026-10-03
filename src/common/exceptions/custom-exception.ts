@@ -27,7 +27,10 @@ export type ErrorCode =
   | 'VALIDATION_ERROR'
   | 'INVALID_CREDENTIALS'
   | 'NOT_FOUND'
-  | 'EMAIL_TAKEN';
+  | 'EMAIL_TAKEN'
+  | 'TOKEN_REGISTRATION_FAILED'
+  | 'TOKEN_REMOVAL_FAILED'
+  | 'NOTIFICATION_NOT_FOUND';
 
 
 export class CustomException extends HttpException {

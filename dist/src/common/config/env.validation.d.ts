@@ -30,6 +30,11 @@ declare class EnvironmentVariables {
     AWS_ACCESS_KEY_ID: string;
     AWS_SECRET_ACCESS_KEY: string;
     AWS_S3_BUCKET_NAME: string;
+    FIREBASE_PROJECT_ID?: string;
+    FIREBASE_CLIENT_EMAIL?: string;
+    FIREBASE_PRIVATE_KEY?: string;
+    FIREBASE_SERVICE_ACCOUNT_PATH?: string;
+    FIREBASE_SERVICE_ACCOUNT_JSON?: string;
 }
 export declare function validate(config: Record<string, unknown>): EnvironmentVariables;
 export {};
