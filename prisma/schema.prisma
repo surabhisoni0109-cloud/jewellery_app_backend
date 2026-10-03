@@ -98,9 +98,29 @@ model JewelleryShowcase {
   vendorProfileId String
 
   imageUrl        String
+  images          String[]      @default([])
   title           String
   description     String?
   price           Decimal       @db.Decimal(10, 2)
+
+  // Attributes
+  jewelleryType   String?
+  weight          String?
+  purity          String?
+  gender          String?
+
+  // Special Occasion
+  hasSpecialOccasion  Boolean   @default(false)
+  specialOccasionName String?
+  specialOccasionDate DateTime?
+
+  // Discount
+  hasDiscount         Boolean   @default(false)
+  discountPercentage  Decimal?  @db.Decimal(5, 2)
+  discountPrice       Decimal?  @db.Decimal(10, 2)
+
+  // Status
+  isPublished         Boolean   @default(true)
 
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
@@ -109,6 +129,9 @@ model JewelleryShowcase {
   enquiries       VendorEnquiry[]
 
   @@index([vendorProfileId])
+  @@index([jewelleryType])
+  @@index([gender])
+  @@index([isPublished])
 }
 
 model VendorStoreView {

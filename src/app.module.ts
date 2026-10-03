@@ -13,6 +13,7 @@ import { VendorDashboardModule } from './modules/vendor-dashboard.module';
 import { AdminModule } from './modules/admin.module';
 import { NotificationModule } from './modules/notification.module';
 import { ContentModule } from './modules/content.module';
+import { JewelleryModule } from './modules/jewellery.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { ContentModule } from './modules/content.module';
     AdminModule,
     NotificationModule,
     ContentModule,
+    JewelleryModule,
   ],
 })
 export class AppModule {}

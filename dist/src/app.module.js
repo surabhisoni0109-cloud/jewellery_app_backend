@@ -22,6 +22,7 @@ const vendor_dashboard_module_1 = require("./modules/vendor-dashboard.module");
 const admin_module_1 = require("./modules/admin.module");
 const notification_module_1 = require("./modules/notification.module");
 const content_module_1 = require("./modules/content.module");
+const jewellery_module_1 = require("./modules/jewellery.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -49,6 +50,7 @@ exports.AppModule = AppModule = __decorate([
             admin_module_1.AdminModule,
             notification_module_1.NotificationModule,
             content_module_1.ContentModule,
+            jewellery_module_1.JewelleryModule,
         ],
     })
 ], AppModule);
