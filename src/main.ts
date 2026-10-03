@@ -3,6 +3,9 @@ import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
+import * as path from 'path';
+import * as fs from 'fs';
+const express = require('express');
 import { AppModule } from './app.module';
 import { TransformResponseInterceptor } from './common/interceptors/transform-response.interceptor';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
@@ -26,24 +29,14 @@ async function bootstrap() {
   // Disable HSTS on non-production to avoid browser forcing HTTPS without SSL cert
   const hsts = env === 'production' ? undefined : false;
 
-  // Helmet Security Middleware with custom CSP for Swagger UI route
+  // Relax Helmet CSP for Swagger UI and Admin Portal
   app.use((req: any, res: any, next: any) => {
-    if (req.path.startsWith('/api/docs')) {
-      // Relaxed CSP for Swagger UI documentation page
+    if (req.path.startsWith('/api/docs') || req.path.startsWith('/admin')) {
       helmet({
         hsts,
-        contentSecurityPolicy: {
-          useDefaults: false,
-          directives: {
-            defaultSrc: ["'self'"],
-            styleSrc: ["'self'", "'unsafe-inline'"],
-            scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
-            imgSrc: ["'self'", 'data:', 'validator.swagger.io'],
-          },
-        },
+        contentSecurityPolicy: false,
       })(req, res, next);
     } else {
-      // Strict helmet defaults for all standard API endpoints
       helmet({
         hsts,
         contentSecurityPolicy: {
@@ -53,6 +46,28 @@ async function bootstrap() {
       })(req, res, next);
     }
   });
+
+  // Serve Next.js Admin Portal static export from public/admin at /admin
+  const adminStaticDir = path.join(process.cwd(), 'public', 'admin');
+  if (fs.existsSync(adminStaticDir)) {
+    app.use(
+      '/admin',
+      express.static(adminStaticDir, {
+        extensions: ['html'],
+      }),
+    );
+    app.use('/admin', (req: any, res: any, next: any) => {
+      if (path.extname(req.path)) {
+        return next();
+      }
+      const potentialHtml = path.join(adminStaticDir, `${req.path.replace(/^\//, '')}.html`);
+      if (fs.existsSync(potentialHtml)) {
+        return res.sendFile(potentialHtml);
+      }
+      res.sendFile(path.join(adminStaticDir, 'index.html'));
+    });
+    logger.log(`Admin Portal available at ${appUrl}/admin`);
+  }
 
 
   // Global DTO Validation Pipe

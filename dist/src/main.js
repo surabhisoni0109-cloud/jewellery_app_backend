@@ -5,6 +5,9 @@ const config_1 = require("@nestjs/config");
 const core_1 = require("@nestjs/core");
 const swagger_1 = require("@nestjs/swagger");
 const helmet_1 = require("helmet");
+const path = require("path");
+const fs = require("fs");
+const express = require('express');
 const app_module_1 = require("./app.module");
 const transform_response_interceptor_1 = require("./common/interceptors/transform-response.interceptor");
 const global_exception_filter_1 = require("./common/filters/global-exception.filter");
@@ -20,18 +23,10 @@ async function bootstrap() {
     app.enableCors();
     const hsts = env === 'production' ? undefined : false;
     app.use((req, res, next) => {
-        if (req.path.startsWith('/api/docs')) {
+        if (req.path.startsWith('/api/docs') || req.path.startsWith('/admin')) {
             (0, helmet_1.default)({
                 hsts,
-                contentSecurityPolicy: {
-                    useDefaults: false,
-                    directives: {
-                        defaultSrc: ["'self'"],
-                        styleSrc: ["'self'", "'unsafe-inline'"],
-                        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
-                        imgSrc: ["'self'", 'data:', 'validator.swagger.io'],
-                    },
-                },
+                contentSecurityPolicy: false,
             })(req, res, next);
         }
         else {
@@ -44,6 +39,23 @@ async function bootstrap() {
             })(req, res, next);
         }
     });
+    const adminStaticDir = path.join(process.cwd(), 'public', 'admin');
+    if (fs.existsSync(adminStaticDir)) {
+        app.use('/admin', express.static(adminStaticDir, {
+            extensions: ['html'],
+        }));
+        app.use('/admin', (req, res, next) => {
+            if (path.extname(req.path)) {
+                return next();
+            }
+            const potentialHtml = path.join(adminStaticDir, `${req.path.replace(/^\//, '')}.html`);
+            if (fs.existsSync(potentialHtml)) {
+                return res.sendFile(potentialHtml);
+            }
+            res.sendFile(path.join(adminStaticDir, 'index.html'));
+        });
+        logger.log(`Admin Portal available at ${appUrl}/admin`);
+    }
     app.useGlobalPipes(new common_1.ValidationPipe({
         transform: true,
         whitelist: true,
