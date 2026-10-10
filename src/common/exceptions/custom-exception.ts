@@ -30,7 +30,9 @@ export type ErrorCode =
   | 'EMAIL_TAKEN'
   | 'TOKEN_REGISTRATION_FAILED'
   | 'TOKEN_REMOVAL_FAILED'
-  | 'NOTIFICATION_NOT_FOUND';
+  | 'NOTIFICATION_NOT_FOUND'
+  | 'MOBILE_NUMBER_READ_ONLY'
+  | 'IMAGE_NOT_FOUND';
 
 
 export class CustomException extends HttpException {

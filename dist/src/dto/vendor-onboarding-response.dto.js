@@ -20,15 +20,15 @@ __decorate([
     __metadata("design:type", String)
 ], Step1ResponseDto.prototype, "onboardingStep", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'Rahul', nullable: true }),
+    (0, swagger_1.ApiProperty)({ example: 'Yogesh', nullable: true }),
     __metadata("design:type", String)
 ], Step1ResponseDto.prototype, "firstName", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'Sharma', nullable: true }),
+    (0, swagger_1.ApiProperty)({ example: 'Kumawat', nullable: true }),
     __metadata("design:type", String)
 ], Step1ResponseDto.prototype, "lastName", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'rahul@gmail.com', nullable: true }),
+    (0, swagger_1.ApiProperty)({ example: 'yogesh@example.com', nullable: true }),
     __metadata("design:type", String)
 ], Step1ResponseDto.prototype, "email", void 0);
 __decorate([
@@ -164,15 +164,15 @@ class OnboardingPrefillDto {
 }
 exports.OnboardingPrefillDto = OnboardingPrefillDto;
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'Rahul' }),
+    (0, swagger_1.ApiProperty)({ example: 'Yogesh' }),
     __metadata("design:type", String)
 ], OnboardingPrefillDto.prototype, "firstName", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'Sharma' }),
+    (0, swagger_1.ApiProperty)({ example: 'Kumawat' }),
     __metadata("design:type", String)
 ], OnboardingPrefillDto.prototype, "lastName", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'rahul@gmail.com' }),
+    (0, swagger_1.ApiProperty)({ example: 'yogesh@example.com' }),
     __metadata("design:type", String)
 ], OnboardingPrefillDto.prototype, "email", void 0);
 __decorate([

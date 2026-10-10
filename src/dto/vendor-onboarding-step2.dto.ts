@@ -19,11 +19,13 @@ import { IsTimeFormat } from '../common/validators/time-format.validator';
 
 export class StoreLocationDto {
   @ApiProperty({ example: 28.6139, description: 'Latitude (optional)', required: false })
+  @Type(() => Number)
   @IsNumber()
   @IsOptional()
   latitude?: number;
 
   @ApiProperty({ example: 77.209, description: 'Longitude (optional)', required: false })
+  @Type(() => Number)
   @IsNumber()
   @IsOptional()
   longitude?: number;
@@ -99,8 +101,15 @@ export class VendorOnboardingStep2Dto {
   jewelleryStartingPrice!: number;
 
   @ApiProperty({ example: 'https://soni-jewellers.com', description: 'Store website URL (optional)', required: false })
-  @IsUrl({}, { message: 'storeWebsite must be a valid URL' })
   @IsOptional()
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      return trimmed === '' || trimmed === 'null' ? undefined : trimmed;
+    }
+    return value;
+  })
+  @IsUrl({}, { message: 'storeWebsite must be a valid URL' })
   storeWebsite?: string;
 
   @ApiProperty({ example: '9876543210', description: '10-digit Indian contact number for the store', required: true })
@@ -119,7 +128,11 @@ export class VendorOnboardingStep2Dto {
   @MaxLength(100)
   @Transform(({ obj, value }) => {
     const val = value ?? obj?.storeownername ?? obj?.store_owner_name;
-    return typeof val === 'string' ? val.trim() : val;
+    if (typeof val === 'string') {
+      const trimmed = val.trim();
+      return trimmed === '' || trimmed === 'null' ? undefined : trimmed;
+    }
+    return val;
   })
   storeOwnerName?: string;
 
@@ -128,7 +141,6 @@ export class VendorOnboardingStep2Dto {
     description: '10-digit Indian WhatsApp number for the store (optional)',
     required: false,
   })
-  @IsIndianMobile({ message: 'whatsappNumber must be a valid 10-digit Indian mobile number' })
   @IsOptional()
   @Transform(({ obj, value }) => {
     const val =
@@ -137,8 +149,13 @@ export class VendorOnboardingStep2Dto {
       obj?.store_whatsapp_number ??
       obj?.whatsapp_number ??
       obj?.storewhatsappnumber;
-    return typeof val === 'string' ? val.trim() : val;
+    if (typeof val === 'string') {
+      const trimmed = val.trim();
+      return trimmed === '' || trimmed === 'null' ? undefined : trimmed;
+    }
+    return val;
   })
+  @IsIndianMobile({ message: 'whatsappNumber must be a valid 10-digit Indian mobile number' })
   whatsappNumber?: string;
 
   @ApiProperty({ example: 'contact@sonijewellers.com', description: 'Store email address', required: true })
@@ -171,6 +188,27 @@ export class VendorOnboardingStep2Dto {
   @ApiProperty({ type: 'string', format: 'binary', description: 'Store logo image (jpg, jpeg, png, webp — max 5MB)', required: false })
   @IsOptional()
   storeLogo?: string;
+
+  @ApiProperty({ example: false, description: 'Set to true to remove store logo without uploading a new one', required: false })
+  @IsOptional()
+  @Transform(({ value }) => value === true || value === 'true')
+  deleteStoreLogo?: boolean;
+
+  @ApiProperty({
+    example: ['https://s3.amazonaws.com/.../cover-1.jpg'],
+    description: 'Array of existing cover image URLs to keep (omitted ones will be deleted)',
+    required: false,
+  })
+  @IsOptional()
+  existingCoverImages?: string[];
+
+  @ApiProperty({
+    example: ['https://s3.amazonaws.com/.../cover-1.jpg'],
+    description: 'Array of cover image URLs to explicitly delete',
+    required: false,
+  })
+  @IsOptional()
+  deleteCoverImages?: string[];
 
   @ApiProperty({ type: 'array', items: { type: 'string', format: 'binary' }, description: 'Up to 5 store cover images', required: false })
   @IsOptional()

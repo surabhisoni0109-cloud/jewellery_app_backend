@@ -20,12 +20,14 @@ class StoreLocationDto {
 exports.StoreLocationDto = StoreLocationDto;
 __decorate([
     (0, swagger_1.ApiProperty)({ example: 28.6139, description: 'Latitude (optional)', required: false }),
+    (0, class_transformer_1.Type)(() => Number),
     (0, class_validator_1.IsNumber)(),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Number)
 ], StoreLocationDto.prototype, "latitude", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ example: 77.209, description: 'Longitude (optional)', required: false }),
+    (0, class_transformer_1.Type)(() => Number),
     (0, class_validator_1.IsNumber)(),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Number)
@@ -114,8 +116,15 @@ __decorate([
 ], VendorOnboardingStep2Dto.prototype, "jewelleryStartingPrice", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ example: 'https://soni-jewellers.com', description: 'Store website URL (optional)', required: false }),
-    (0, class_validator_1.IsUrl)({}, { message: 'storeWebsite must be a valid URL' }),
     (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Transform)(({ value }) => {
+        if (typeof value === 'string') {
+            const trimmed = value.trim();
+            return trimmed === '' || trimmed === 'null' ? undefined : trimmed;
+        }
+        return value;
+    }),
+    (0, class_validator_1.IsUrl)({}, { message: 'storeWebsite must be a valid URL' }),
     __metadata("design:type", String)
 ], VendorOnboardingStep2Dto.prototype, "storeWebsite", void 0);
 __decorate([
@@ -136,7 +145,11 @@ __decorate([
     (0, class_validator_1.MaxLength)(100),
     (0, class_transformer_1.Transform)(({ obj, value }) => {
         const val = value ?? obj?.storeownername ?? obj?.store_owner_name;
-        return typeof val === 'string' ? val.trim() : val;
+        if (typeof val === 'string') {
+            const trimmed = val.trim();
+            return trimmed === '' || trimmed === 'null' ? undefined : trimmed;
+        }
+        return val;
     }),
     __metadata("design:type", String)
 ], VendorOnboardingStep2Dto.prototype, "storeOwnerName", void 0);
@@ -146,7 +159,6 @@ __decorate([
         description: '10-digit Indian WhatsApp number for the store (optional)',
         required: false,
     }),
-    (0, indian_mobile_validator_1.IsIndianMobile)({ message: 'whatsappNumber must be a valid 10-digit Indian mobile number' }),
     (0, class_validator_1.IsOptional)(),
     (0, class_transformer_1.Transform)(({ obj, value }) => {
         const val = value ??
@@ -154,8 +166,13 @@ __decorate([
             obj?.store_whatsapp_number ??
             obj?.whatsapp_number ??
             obj?.storewhatsappnumber;
-        return typeof val === 'string' ? val.trim() : val;
+        if (typeof val === 'string') {
+            const trimmed = val.trim();
+            return trimmed === '' || trimmed === 'null' ? undefined : trimmed;
+        }
+        return val;
     }),
+    (0, indian_mobile_validator_1.IsIndianMobile)({ message: 'whatsappNumber must be a valid 10-digit Indian mobile number' }),
     __metadata("design:type", String)
 ], VendorOnboardingStep2Dto.prototype, "whatsappNumber", void 0);
 __decorate([
@@ -193,6 +210,30 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], VendorOnboardingStep2Dto.prototype, "storeLogo", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ example: false, description: 'Set to true to remove store logo without uploading a new one', required: false }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Transform)(({ value }) => value === true || value === 'true'),
+    __metadata("design:type", Boolean)
+], VendorOnboardingStep2Dto.prototype, "deleteStoreLogo", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        example: ['https://s3.amazonaws.com/.../cover-1.jpg'],
+        description: 'Array of existing cover image URLs to keep (omitted ones will be deleted)',
+        required: false,
+    }),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Array)
+], VendorOnboardingStep2Dto.prototype, "existingCoverImages", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        example: ['https://s3.amazonaws.com/.../cover-1.jpg'],
+        description: 'Array of cover image URLs to explicitly delete',
+        required: false,
+    }),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Array)
+], VendorOnboardingStep2Dto.prototype, "deleteCoverImages", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ type: 'array', items: { type: 'string', format: 'binary' }, description: 'Up to 5 store cover images', required: false }),
     (0, class_validator_1.IsOptional)(),

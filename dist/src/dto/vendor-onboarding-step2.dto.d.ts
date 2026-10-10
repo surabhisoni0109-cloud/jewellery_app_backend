@@ -23,5 +23,8 @@ export declare class VendorOnboardingStep2Dto {
     storeClosingTime: string;
     storeFoundedYear: number;
     storeLogo?: string;
+    deleteStoreLogo?: boolean;
+    existingCoverImages?: string[];
+    deleteCoverImages?: string[];
     storeCoverImages?: string[];
 }

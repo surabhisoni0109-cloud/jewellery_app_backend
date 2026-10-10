@@ -3,6 +3,7 @@ import { Gender } from '@prisma/client';
 import { Transform } from 'class-transformer';
 import {
   IsDateString,
+  IsEmail,
   IsEnum,
   IsNotEmpty,
   IsOptional,
@@ -11,6 +12,48 @@ import {
 import { IsMinAge } from '../common/validators/min-age.validator';
 
 export class VendorOnboardingStep1Dto {
+  @ApiProperty({
+    example: 'Yogesh',
+    description: 'First name of the vendor',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty({ message: 'firstName cannot be empty' })
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  firstName?: string;
+
+  @ApiProperty({
+    example: 'Kumawat',
+    description: 'Last name of the vendor',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty({ message: 'lastName cannot be empty' })
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  lastName?: string;
+
+  @ApiProperty({
+    example: 'yogesh@example.com',
+    description: 'Email address of the vendor',
+    required: false,
+  })
+  @IsOptional()
+  @IsEmail({}, { message: 'email must be a valid email address' })
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim().toLowerCase() : value))
+  email?: string;
+
+  @ApiProperty({
+    example: '9876543210',
+    description: 'Mobile number of the vendor (read-only, cannot be updated)',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  mobileNumber?: string;
+
   @ApiProperty({
     enum: Gender,
     example: 'MALE',

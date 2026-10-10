@@ -57,9 +57,10 @@ let S3Service = class S3Service {
         return `https://${this.bucket}.s3.${this.configService.get('AWS_REGION', 'ap-south-1')}.amazonaws.com/${key}`;
     }
     async uploadFiles(files, keyPrefix) {
+        const timestamp = Date.now();
         const uploadPromises = files.map((file, index) => {
             const ext = file.originalname.split('.').pop() ?? 'jpg';
-            const key = `${keyPrefix}-${index + 1}.${ext}`;
+            const key = `${keyPrefix}-${timestamp}-${index + 1}.${ext}`;
             return this.uploadFile(file, key);
         });
         return Promise.all(uploadPromises);

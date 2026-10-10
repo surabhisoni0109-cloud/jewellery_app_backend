@@ -67,6 +67,16 @@ export declare class VendorOnboardingService {
         storeClosingTime: string | null;
         storeFoundedYear: number | null;
     }>;
+    deleteCoverImage(userId: string, identifier: {
+        imageUrl?: string;
+        imageIndex?: number;
+    }): Promise<{
+        storeCoverImages: string[];
+        deletedImageUrl: string;
+    }>;
+    deleteStoreLogo(userId: string): Promise<{
+        storeLogo: string | null;
+    }>;
     getStep3(userId: string): Promise<{
         onboardingStep: import(".prisma/client").$Enums.OnboardingStep;
         isOnboarded: boolean;

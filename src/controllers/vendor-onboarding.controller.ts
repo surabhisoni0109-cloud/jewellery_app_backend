@@ -8,6 +8,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UploadedFile,
   UploadedFiles,
   UseGuards,
@@ -20,6 +21,7 @@ import {
   ApiConsumes,
   ApiOperation,
   ApiParam,
+  ApiQuery,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
@@ -75,6 +77,35 @@ async function parseAndValidateDto<T extends object>(
         HttpStatus.BAD_REQUEST,
       );
     }
+  }
+
+  // existingCoverImages comes as JSON string or comma-separated in multipart
+  if (body.existingCoverImages && typeof body.existingCoverImages === 'string') {
+    try {
+      body.existingCoverImages = JSON.parse(body.existingCoverImages);
+    } catch {
+      body.existingCoverImages = body.existingCoverImages
+        .split(',')
+        .map((s: string) => s.trim())
+        .filter(Boolean);
+    }
+  }
+
+  // deleteCoverImages comes as JSON string or comma-separated in multipart
+  if (body.deleteCoverImages && typeof body.deleteCoverImages === 'string') {
+    try {
+      body.deleteCoverImages = JSON.parse(body.deleteCoverImages);
+    } catch {
+      body.deleteCoverImages = body.deleteCoverImages
+        .split(',')
+        .map((s: string) => s.trim())
+        .filter(Boolean);
+    }
+  }
+
+  // deleteStoreLogo boolean in multipart
+  if (body.deleteStoreLogo !== undefined && typeof body.deleteStoreLogo === 'string') {
+    body.deleteStoreLogo = body.deleteStoreLogo === 'true';
   }
 
   const instance = plainToInstance(cls, body, { enableImplicitConversion: true });
@@ -151,11 +182,12 @@ export class VendorOnboardingController {
   @ApiConsumes('multipart/form-data')
   @ApiOperation({
     summary: 'Step 1 — Personal Profile',
-    description: 'Submit or update personal profile info: gender, date of birth, and optional profile picture.',
+    description: 'Submit or update personal profile info: firstName, lastName, email, gender, date of birth, and optional profile picture. Note: mobileNumber cannot be updated.',
   })
   @ApiBody({ type: VendorOnboardingStep1Dto })
   @ApiWrappedResponse(Step1ResponseDto, 200, 'Personal profile updated successfully')
-  @ApiResponse({ status: 400, description: 'Validation error (INVALID_IMAGE, UNDERAGE)', type: ApiErrorResponseDto })
+  @ApiResponse({ status: 400, description: 'Validation error (INVALID_IMAGE, UNDERAGE, MOBILE_NUMBER_READ_ONLY)', type: ApiErrorResponseDto })
+  @ApiResponse({ status: 409, description: 'Email conflict (EMAIL_ALREADY_EXISTS)', type: ApiErrorResponseDto })
   @ApiResponse({ status: 401, description: 'Unauthorized', type: ApiErrorResponseDto })
   @ApiResponse({ status: 403, description: 'Vendor-only (VENDOR_ONLY)', type: ApiErrorResponseDto })
   async updateStep1(
@@ -229,6 +261,55 @@ export class VendorOnboardingController {
       files?.storeCoverImages,
     );
     return { message: 'Store profile updated successfully', data };
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // DELETE /vendor/onboarding/cover-image
+  // ─────────────────────────────────────────────────────────────────────────
+
+  @Delete('cover-image')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Delete Store Cover Image',
+    description: 'Delete a single store cover image by URL or 0-based index. Removes the file from S3 and frees up a cover image slot.',
+  })
+  @ApiQuery({ name: 'imageUrl', required: false, description: 'Full URL of cover image to delete' })
+  @ApiQuery({ name: 'imageIndex', required: false, description: '0-based index of cover image to delete' })
+  @ApiResponse({ status: 200, description: 'Cover image deleted successfully' })
+  @ApiResponse({ status: 404, description: 'Cover image not found (IMAGE_NOT_FOUND)', type: ApiErrorResponseDto })
+  @ApiResponse({ status: 401, description: 'Unauthorized', type: ApiErrorResponseDto })
+  @ApiResponse({ status: 403, description: 'Vendor-only (VENDOR_ONLY)', type: ApiErrorResponseDto })
+  async deleteCoverImage(
+    @CurrentUser() user: User,
+    @Query('imageUrl') imageUrl?: string,
+    @Query('imageIndex') imageIndex?: string,
+    @Body('imageUrl') bodyImageUrl?: string,
+  ) {
+    const url = imageUrl || bodyImageUrl;
+    const idx = imageIndex !== undefined ? parseInt(imageIndex, 10) : undefined;
+    const data = await this.onboardingService.deleteCoverImage(user.userId, {
+      imageUrl: url,
+      imageIndex: idx,
+    });
+    return { message: 'Cover image deleted successfully', data };
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // DELETE /vendor/onboarding/store-logo
+  // ─────────────────────────────────────────────────────────────────────────
+
+  @Delete('store-logo')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Delete Store Logo',
+    description: 'Deletes the store logo from S3 and resets storeLogo to null in store profile.',
+  })
+  @ApiResponse({ status: 200, description: 'Store logo deleted successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized', type: ApiErrorResponseDto })
+  @ApiResponse({ status: 403, description: 'Vendor-only (VENDOR_ONLY)', type: ApiErrorResponseDto })
+  async deleteStoreLogo(@CurrentUser() user: User) {
+    const data = await this.onboardingService.deleteStoreLogo(user.userId);
+    return { message: 'Store logo deleted successfully', data };
   }
 
   // ─────────────────────────────────────────────────────────────────────────

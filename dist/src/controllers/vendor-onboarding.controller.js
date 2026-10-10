@@ -48,6 +48,31 @@ async function parseAndValidateDto(cls, body) {
             throw new custom_exception_1.CustomException('items must be a valid JSON array', 'INVALID_ITEMS', common_1.HttpStatus.BAD_REQUEST);
         }
     }
+    if (body.existingCoverImages && typeof body.existingCoverImages === 'string') {
+        try {
+            body.existingCoverImages = JSON.parse(body.existingCoverImages);
+        }
+        catch {
+            body.existingCoverImages = body.existingCoverImages
+                .split(',')
+                .map((s) => s.trim())
+                .filter(Boolean);
+        }
+    }
+    if (body.deleteCoverImages && typeof body.deleteCoverImages === 'string') {
+        try {
+            body.deleteCoverImages = JSON.parse(body.deleteCoverImages);
+        }
+        catch {
+            body.deleteCoverImages = body.deleteCoverImages
+                .split(',')
+                .map((s) => s.trim())
+                .filter(Boolean);
+        }
+    }
+    if (body.deleteStoreLogo !== undefined && typeof body.deleteStoreLogo === 'string') {
+        body.deleteStoreLogo = body.deleteStoreLogo === 'true';
+    }
     const instance = (0, class_transformer_1.plainToInstance)(cls, body, { enableImplicitConversion: true });
     const errors = await (0, class_validator_1.validate)(instance, { whitelist: true, stopAtFirstError: false });
     if (errors.length > 0) {
@@ -85,6 +110,19 @@ let VendorOnboardingController = class VendorOnboardingController {
         const dto = await parseAndValidateDto(vendor_onboarding_step2_dto_1.VendorOnboardingStep2Dto, rawBody);
         const data = await this.onboardingService.updateStep2(user.userId, dto, files?.storeLogo?.[0], files?.storeCoverImages);
         return { message: 'Store profile updated successfully', data };
+    }
+    async deleteCoverImage(user, imageUrl, imageIndex, bodyImageUrl) {
+        const url = imageUrl || bodyImageUrl;
+        const idx = imageIndex !== undefined ? parseInt(imageIndex, 10) : undefined;
+        const data = await this.onboardingService.deleteCoverImage(user.userId, {
+            imageUrl: url,
+            imageIndex: idx,
+        });
+        return { message: 'Cover image deleted successfully', data };
+    }
+    async deleteStoreLogo(user) {
+        const data = await this.onboardingService.deleteStoreLogo(user.userId);
+        return { message: 'Store logo deleted successfully', data };
     }
     async getStep3(user) {
         const data = await this.onboardingService.getStep3(user.userId);
@@ -136,11 +174,12 @@ __decorate([
     (0, swagger_1.ApiConsumes)('multipart/form-data'),
     (0, swagger_1.ApiOperation)({
         summary: 'Step 1 — Personal Profile',
-        description: 'Submit or update personal profile info: gender, date of birth, and optional profile picture.',
+        description: 'Submit or update personal profile info: firstName, lastName, email, gender, date of birth, and optional profile picture. Note: mobileNumber cannot be updated.',
     }),
     (0, swagger_1.ApiBody)({ type: vendor_onboarding_step1_dto_1.VendorOnboardingStep1Dto }),
     (0, api_response_wrapper_decorator_1.ApiWrappedResponse)(vendor_onboarding_response_dto_1.Step1ResponseDto, 200, 'Personal profile updated successfully'),
-    (0, swagger_1.ApiResponse)({ status: 400, description: 'Validation error (INVALID_IMAGE, UNDERAGE)', type: api_response_dto_1.ApiErrorResponseDto }),
+    (0, swagger_1.ApiResponse)({ status: 400, description: 'Validation error (INVALID_IMAGE, UNDERAGE, MOBILE_NUMBER_READ_ONLY)', type: api_response_dto_1.ApiErrorResponseDto }),
+    (0, swagger_1.ApiResponse)({ status: 409, description: 'Email conflict (EMAIL_ALREADY_EXISTS)', type: api_response_dto_1.ApiErrorResponseDto }),
     (0, swagger_1.ApiResponse)({ status: 401, description: 'Unauthorized', type: api_response_dto_1.ApiErrorResponseDto }),
     (0, swagger_1.ApiResponse)({ status: 403, description: 'Vendor-only (VENDOR_ONLY)', type: api_response_dto_1.ApiErrorResponseDto }),
     __param(0, (0, current_user_decorator_1.CurrentUser)()),
@@ -188,6 +227,42 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object, Object]),
     __metadata("design:returntype", Promise)
 ], VendorOnboardingController.prototype, "updateStep2", null);
+__decorate([
+    (0, common_1.Delete)('cover-image'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Delete Store Cover Image',
+        description: 'Delete a single store cover image by URL or 0-based index. Removes the file from S3 and frees up a cover image slot.',
+    }),
+    (0, swagger_1.ApiQuery)({ name: 'imageUrl', required: false, description: 'Full URL of cover image to delete' }),
+    (0, swagger_1.ApiQuery)({ name: 'imageIndex', required: false, description: '0-based index of cover image to delete' }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: 'Cover image deleted successfully' }),
+    (0, swagger_1.ApiResponse)({ status: 404, description: 'Cover image not found (IMAGE_NOT_FOUND)', type: api_response_dto_1.ApiErrorResponseDto }),
+    (0, swagger_1.ApiResponse)({ status: 401, description: 'Unauthorized', type: api_response_dto_1.ApiErrorResponseDto }),
+    (0, swagger_1.ApiResponse)({ status: 403, description: 'Vendor-only (VENDOR_ONLY)', type: api_response_dto_1.ApiErrorResponseDto }),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Query)('imageUrl')),
+    __param(2, (0, common_1.Query)('imageIndex')),
+    __param(3, (0, common_1.Body)('imageUrl')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String, String, String]),
+    __metadata("design:returntype", Promise)
+], VendorOnboardingController.prototype, "deleteCoverImage", null);
+__decorate([
+    (0, common_1.Delete)('store-logo'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Delete Store Logo',
+        description: 'Deletes the store logo from S3 and resets storeLogo to null in store profile.',
+    }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: 'Store logo deleted successfully' }),
+    (0, swagger_1.ApiResponse)({ status: 401, description: 'Unauthorized', type: api_response_dto_1.ApiErrorResponseDto }),
+    (0, swagger_1.ApiResponse)({ status: 403, description: 'Vendor-only (VENDOR_ONLY)', type: api_response_dto_1.ApiErrorResponseDto }),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], VendorOnboardingController.prototype, "deleteStoreLogo", null);
 __decorate([
     (0, common_1.Get)('step-3'),
     (0, swagger_1.ApiOperation)({

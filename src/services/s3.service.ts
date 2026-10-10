@@ -82,9 +82,10 @@ export class S3Service {
    * Uploads multiple files concurrently and returns an array of public URLs.
    */
   async uploadFiles(files: Express.Multer.File[], keyPrefix: string): Promise<string[]> {
+    const timestamp = Date.now();
     const uploadPromises = files.map((file, index) => {
       const ext = file.originalname.split('.').pop() ?? 'jpg';
-      const key = `${keyPrefix}-${index + 1}.${ext}`;
+      const key = `${keyPrefix}-${timestamp}-${index + 1}.${ext}`;
       return this.uploadFile(file, key);
     });
     return Promise.all(uploadPromises);

@@ -7,13 +7,13 @@ export class Step1ResponseDto {
   @ApiProperty({ example: 'STEP_1_DONE', enum: OnboardingStep })
   onboardingStep!: OnboardingStep;
 
-  @ApiProperty({ example: 'Rahul', nullable: true })
+  @ApiProperty({ example: 'Yogesh', nullable: true })
   firstName?: string;
 
-  @ApiProperty({ example: 'Sharma', nullable: true })
+  @ApiProperty({ example: 'Kumawat', nullable: true })
   lastName?: string;
 
-  @ApiProperty({ example: 'rahul@gmail.com', nullable: true })
+  @ApiProperty({ example: 'yogesh@example.com', nullable: true })
   email?: string;
 
   @ApiProperty({ example: '9876543210', nullable: true })
@@ -122,13 +122,13 @@ export class Step3ResponseDto {
 // ── Status Response ────────────────────────────────────────────────────────
 
 export class OnboardingPrefillDto {
-  @ApiProperty({ example: 'Rahul' })
+  @ApiProperty({ example: 'Yogesh' })
   firstName!: string;
 
-  @ApiProperty({ example: 'Sharma' })
+  @ApiProperty({ example: 'Kumawat' })
   lastName!: string;
 
-  @ApiProperty({ example: 'rahul@gmail.com' })
+  @ApiProperty({ example: 'yogesh@example.com' })
   email!: string;
 
   @ApiProperty({ example: '9876543210' })

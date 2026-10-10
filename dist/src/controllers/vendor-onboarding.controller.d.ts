@@ -89,6 +89,19 @@ export declare class VendorOnboardingController {
             storeFoundedYear: number | null;
         };
     }>;
+    deleteCoverImage(user: User, imageUrl?: string, imageIndex?: string, bodyImageUrl?: string): Promise<{
+        message: string;
+        data: {
+            storeCoverImages: string[];
+            deletedImageUrl: string;
+        };
+    }>;
+    deleteStoreLogo(user: User): Promise<{
+        message: string;
+        data: {
+            storeLogo: string | null;
+        };
+    }>;
     getStep3(user: User): Promise<{
         message: string;
         data: {

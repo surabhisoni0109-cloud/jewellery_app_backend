@@ -85,14 +85,49 @@ let VendorOnboardingService = class VendorOnboardingService {
         if (profilePictureFile) {
             this.s3.validateFile(profilePictureFile);
         }
-        const profile = await this.getOrCreateProfile(userId);
+        const [profile, currentUser] = await Promise.all([
+            this.getOrCreateProfile(userId),
+            this.prisma.user.findUnique({ where: { userId } }),
+        ]);
+        if (!currentUser) {
+            throw new custom_exception_1.CustomException('User not found', 'USER_NOT_FOUND', common_1.HttpStatus.NOT_FOUND);
+        }
+        if (dto.mobileNumber && dto.mobileNumber.trim() !== currentUser.mobileNumber) {
+            throw new custom_exception_1.CustomException('Mobile number cannot be updated', 'MOBILE_NUMBER_READ_ONLY', common_1.HttpStatus.BAD_REQUEST);
+        }
+        let normalizedEmail;
+        if (dto.email) {
+            normalizedEmail = dto.email.trim().toLowerCase();
+            if (normalizedEmail !== currentUser.email.toLowerCase()) {
+                const existingEmailUser = await this.prisma.user.findFirst({
+                    where: {
+                        email: normalizedEmail,
+                        type: currentUser.type,
+                        NOT: { userId },
+                    },
+                });
+                if (existingEmailUser) {
+                    throw new custom_exception_1.CustomException('An account with this email address already exists for the specified type', 'EMAIL_ALREADY_EXISTS', common_1.HttpStatus.CONFLICT);
+                }
+            }
+        }
         let profilePictureUrl;
         if (profilePictureFile) {
             const ext = profilePictureFile.originalname.split('.').pop() ?? 'jpg';
             profilePictureUrl = await this.s3.uploadFile(profilePictureFile, `vendors/${userId}/profile-picture.${ext}`);
         }
         const { onboardingStep, isOnboarded } = this.resolveNewOnboardingStep(profile.onboardingStep, 1, profile.isOnboarded);
-        const [updated, user] = await Promise.all([
+        const userUpdateData = {};
+        if (dto.firstName !== undefined) {
+            userUpdateData.firstName = dto.firstName.trim();
+        }
+        if (dto.lastName !== undefined) {
+            userUpdateData.lastName = dto.lastName.trim();
+        }
+        if (normalizedEmail !== undefined) {
+            userUpdateData.email = normalizedEmail;
+        }
+        const [updatedProfile, updatedUser] = await Promise.all([
             this.prisma.vendorProfile.update({
                 where: { userId },
                 data: {
@@ -103,17 +138,22 @@ let VendorOnboardingService = class VendorOnboardingService {
                     isOnboarded,
                 },
             }),
-            this.prisma.user.findUnique({ where: { userId } }),
+            Object.keys(userUpdateData).length > 0
+                ? this.prisma.user.update({
+                    where: { userId },
+                    data: userUpdateData,
+                })
+                : currentUser,
         ]);
         return {
-            onboardingStep: updated.onboardingStep,
-            firstName: user?.firstName ?? '',
-            lastName: user?.lastName ?? '',
-            email: user?.email ?? '',
-            mobileNumber: user?.mobileNumber ?? '',
-            gender: updated.gender,
-            dob: updated.dob?.toISOString().split('T')[0] ?? null,
-            profilePicture: updated.profilePicture,
+            onboardingStep: updatedProfile.onboardingStep,
+            firstName: updatedUser?.firstName ?? '',
+            lastName: updatedUser?.lastName ?? '',
+            email: updatedUser?.email ?? '',
+            mobileNumber: updatedUser?.mobileNumber ?? '',
+            gender: updatedProfile.gender,
+            dob: updatedProfile.dob?.toISOString().split('T')[0] ?? null,
+            profilePicture: updatedProfile.profilePicture,
         };
     }
     async getStep2(userId) {
@@ -151,37 +191,74 @@ let VendorOnboardingService = class VendorOnboardingService {
             }
         }
         const profile = await this.getOrCreateProfile(userId);
-        const existingCoverCount = profile.storeCoverImages?.length ?? 0;
-        const newCoverCount = storeCoverFiles?.length ?? 0;
-        if (existingCoverCount + newCoverCount > MAX_COVER_IMAGES) {
-            throw new custom_exception_1.CustomException(`Store can have a maximum of ${MAX_COVER_IMAGES} cover images. Currently has ${existingCoverCount}.`, 'TOO_MANY_IMAGES', common_1.HttpStatus.BAD_REQUEST);
+        let retainedCoverImages = profile.storeCoverImages ?? [];
+        if (dto.existingCoverImages !== undefined) {
+            const existingSet = new Set(dto.existingCoverImages);
+            const toDelete = retainedCoverImages.filter((url) => !existingSet.has(url));
+            for (const url of toDelete) {
+                await this.s3.deleteFileByUrl(url);
+            }
+            retainedCoverImages = retainedCoverImages.filter((url) => existingSet.has(url));
         }
-        let storeLogoUrl;
+        if (dto.deleteCoverImages && dto.deleteCoverImages.length > 0) {
+            const deleteSet = new Set(dto.deleteCoverImages);
+            const toDelete = retainedCoverImages.filter((url) => deleteSet.has(url));
+            for (const url of toDelete) {
+                await this.s3.deleteFileByUrl(url);
+            }
+            retainedCoverImages = retainedCoverImages.filter((url) => !deleteSet.has(url));
+        }
+        const newCoverCount = storeCoverFiles?.length ?? 0;
+        if (retainedCoverImages.length + newCoverCount > MAX_COVER_IMAGES) {
+            throw new custom_exception_1.CustomException(`Store can have a maximum of ${MAX_COVER_IMAGES} cover images. Currently has ${retainedCoverImages.length} retained image(s).`, 'TOO_MANY_IMAGES', common_1.HttpStatus.BAD_REQUEST);
+        }
+        let storeLogoUrl = undefined;
         if (storeLogoFile) {
+            if (profile.storeLogo) {
+                await this.s3.deleteFileByUrl(profile.storeLogo);
+            }
             const ext = storeLogoFile.originalname.split('.').pop() ?? 'jpg';
-            storeLogoUrl = await this.s3.uploadFile(storeLogoFile, `vendors/${userId}/store-logo.${ext}`);
+            storeLogoUrl = await this.s3.uploadFile(storeLogoFile, `vendors/${userId}/store-logo-${Date.now()}.${ext}`);
+        }
+        else if (dto.deleteStoreLogo) {
+            if (profile.storeLogo) {
+                await this.s3.deleteFileByUrl(profile.storeLogo);
+            }
+            storeLogoUrl = null;
         }
         let newCoverUrls = [];
         if (storeCoverFiles?.length) {
             newCoverUrls = await this.s3.uploadFiles(storeCoverFiles, `vendors/${userId}/cover`);
         }
-        const mergedCoverImages = [...(profile.storeCoverImages ?? []), ...newCoverUrls];
+        const mergedCoverImages = [...retainedCoverImages, ...newCoverUrls];
         const { onboardingStep, isOnboarded } = this.resolveNewOnboardingStep(profile.onboardingStep, 2, profile.isOnboarded);
         const updated = await this.prisma.vendorProfile.update({
             where: { userId },
             data: {
-                storeName: dto.storeName,
-                storeDescription: dto.storeDescription,
-                storeLocation: dto.storeLocation,
-                jewelleryStartingPrice: dto.jewelleryStartingPrice,
-                storeWebsite: dto.storeWebsite ?? null,
-                storeContactNumber: dto.storeContactNumber,
-                storeOwnerName: dto.storeOwnerName ?? undefined,
-                whatsappNumber: dto.whatsappNumber ?? undefined,
-                storeEmail: dto.storeEmail,
-                storeOpeningTime: dto.storeOpeningTime,
-                storeClosingTime: dto.storeClosingTime,
-                storeFoundedYear: dto.storeFoundedYear,
+                storeName: dto.storeName ?? profile.storeName,
+                storeDescription: dto.storeDescription ?? profile.storeDescription,
+                storeLocation: dto.storeLocation ?? profile.storeLocation,
+                jewelleryStartingPrice: dto.jewelleryStartingPrice ?? profile.jewelleryStartingPrice,
+                storeWebsite: dto.storeWebsite !== undefined
+                    ? dto.storeWebsite
+                        ? dto.storeWebsite.trim()
+                        : null
+                    : profile.storeWebsite,
+                storeContactNumber: dto.storeContactNumber ?? profile.storeContactNumber,
+                storeOwnerName: dto.storeOwnerName !== undefined
+                    ? dto.storeOwnerName
+                        ? dto.storeOwnerName.trim()
+                        : null
+                    : profile.storeOwnerName ?? null,
+                whatsappNumber: dto.whatsappNumber !== undefined
+                    ? dto.whatsappNumber
+                        ? dto.whatsappNumber.trim()
+                        : null
+                    : profile.whatsappNumber ?? null,
+                storeEmail: dto.storeEmail ?? profile.storeEmail,
+                storeOpeningTime: dto.storeOpeningTime ?? profile.storeOpeningTime,
+                storeClosingTime: dto.storeClosingTime ?? profile.storeClosingTime,
+                storeFoundedYear: dto.storeFoundedYear ?? profile.storeFoundedYear,
                 ...(storeLogoUrl !== undefined && { storeLogo: storeLogoUrl }),
                 storeCoverImages: mergedCoverImages,
                 onboardingStep,
@@ -207,6 +284,47 @@ let VendorOnboardingService = class VendorOnboardingService {
             storeOpeningTime: updated.storeOpeningTime,
             storeClosingTime: updated.storeClosingTime,
             storeFoundedYear: updated.storeFoundedYear,
+        };
+    }
+    async deleteCoverImage(userId, identifier) {
+        const profile = await this.getOrCreateProfile(userId);
+        const currentImages = profile.storeCoverImages ?? [];
+        let targetUrl = identifier.imageUrl;
+        if (!targetUrl && identifier.imageIndex !== undefined) {
+            if (identifier.imageIndex < 0 || identifier.imageIndex >= currentImages.length) {
+                throw new custom_exception_1.CustomException('Cover image index out of range', 'IMAGE_NOT_FOUND', common_1.HttpStatus.NOT_FOUND);
+            }
+            targetUrl = currentImages[identifier.imageIndex];
+        }
+        if (!targetUrl || !currentImages.includes(targetUrl)) {
+            throw new custom_exception_1.CustomException('Cover image not found in store profile', 'IMAGE_NOT_FOUND', common_1.HttpStatus.NOT_FOUND);
+        }
+        await this.s3.deleteFileByUrl(targetUrl);
+        const updatedImages = currentImages.filter((img) => img !== targetUrl);
+        const updated = await this.prisma.vendorProfile.update({
+            where: { userId },
+            data: {
+                storeCoverImages: updatedImages,
+            },
+        });
+        return {
+            storeCoverImages: updated.storeCoverImages,
+            deletedImageUrl: targetUrl,
+        };
+    }
+    async deleteStoreLogo(userId) {
+        const profile = await this.getOrCreateProfile(userId);
+        if (profile.storeLogo) {
+            await this.s3.deleteFileByUrl(profile.storeLogo);
+        }
+        const updated = await this.prisma.vendorProfile.update({
+            where: { userId },
+            data: {
+                storeLogo: null,
+            },
+        });
+        return {
+            storeLogo: updated.storeLogo,
         };
     }
     async getStep3(userId) {

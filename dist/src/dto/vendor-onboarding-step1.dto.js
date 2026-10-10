@@ -20,6 +20,52 @@ class VendorOnboardingStep1Dto {
 exports.VendorOnboardingStep1Dto = VendorOnboardingStep1Dto;
 __decorate([
     (0, swagger_1.ApiProperty)({
+        example: 'Yogesh',
+        description: 'First name of the vendor',
+        required: false,
+    }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)({ message: 'firstName cannot be empty' }),
+    (0, class_transformer_1.Transform)(({ value }) => (typeof value === 'string' ? value.trim() : value)),
+    __metadata("design:type", String)
+], VendorOnboardingStep1Dto.prototype, "firstName", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        example: 'Kumawat',
+        description: 'Last name of the vendor',
+        required: false,
+    }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)({ message: 'lastName cannot be empty' }),
+    (0, class_transformer_1.Transform)(({ value }) => (typeof value === 'string' ? value.trim() : value)),
+    __metadata("design:type", String)
+], VendorOnboardingStep1Dto.prototype, "lastName", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        example: 'yogesh@example.com',
+        description: 'Email address of the vendor',
+        required: false,
+    }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsEmail)({}, { message: 'email must be a valid email address' }),
+    (0, class_transformer_1.Transform)(({ value }) => (typeof value === 'string' ? value.trim().toLowerCase() : value)),
+    __metadata("design:type", String)
+], VendorOnboardingStep1Dto.prototype, "email", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        example: '9876543210',
+        description: 'Mobile number of the vendor (read-only, cannot be updated)',
+        required: false,
+    }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_transformer_1.Transform)(({ value }) => (typeof value === 'string' ? value.trim() : value)),
+    __metadata("design:type", String)
+], VendorOnboardingStep1Dto.prototype, "mobileNumber", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({
         enum: client_1.Gender,
         example: 'MALE',
         description: 'Vendor gender',
