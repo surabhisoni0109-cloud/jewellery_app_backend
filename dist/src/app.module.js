@@ -18,6 +18,8 @@ const otp_module_1 = require("./modules/otp.module");
 const users_module_1 = require("./modules/users.module");
 const auth_module_1 = require("./modules/auth.module");
 const vendor_onboarding_module_1 = require("./modules/vendor-onboarding.module");
+const user_onboarding_module_1 = require("./modules/user-onboarding.module");
+const user_stores_module_1 = require("./modules/user-stores.module");
 const vendor_dashboard_module_1 = require("./modules/vendor-dashboard.module");
 const admin_module_1 = require("./modules/admin.module");
 const notification_module_1 = require("./modules/notification.module");
@@ -46,6 +48,8 @@ exports.AppModule = AppModule = __decorate([
             users_module_1.UsersModule,
             auth_module_1.AuthModule,
             vendor_onboarding_module_1.VendorOnboardingModule,
+            user_onboarding_module_1.UserOnboardingModule,
+            user_stores_module_1.UserStoresModule,
             vendor_dashboard_module_1.VendorDashboardModule,
             admin_module_1.AdminModule,
             notification_module_1.NotificationModule,

@@ -32,7 +32,8 @@ export type ErrorCode =
   | 'TOKEN_REMOVAL_FAILED'
   | 'NOTIFICATION_NOT_FOUND'
   | 'MOBILE_NUMBER_READ_ONLY'
-  | 'IMAGE_NOT_FOUND';
+  | 'IMAGE_NOT_FOUND'
+  | 'USER_ONLY';
 
 
 export class CustomException extends HttpException {

@@ -9,6 +9,8 @@ import { OtpModule } from './modules/otp.module';
 import { UsersModule } from './modules/users.module';
 import { AuthModule } from './modules/auth.module';
 import { VendorOnboardingModule } from './modules/vendor-onboarding.module';
+import { UserOnboardingModule } from './modules/user-onboarding.module';
+import { UserStoresModule } from './modules/user-stores.module';
 import { VendorDashboardModule } from './modules/vendor-dashboard.module';
 import { AdminModule } from './modules/admin.module';
 import { NotificationModule } from './modules/notification.module';
@@ -34,6 +36,8 @@ import { JewelleryModule } from './modules/jewellery.module';
     UsersModule,
     AuthModule,
     VendorOnboardingModule,
+    UserOnboardingModule,
+    UserStoresModule,
     VendorDashboardModule,
     AdminModule,
     NotificationModule,
