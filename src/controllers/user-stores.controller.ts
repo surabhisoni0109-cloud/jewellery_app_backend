@@ -35,6 +35,8 @@ import {
   StoreReviewItemDto,
   CreateStoreRatingDto,
   CreateStoreEnquiryDto,
+  ToggleFavoriteResponseDto,
+  FavoriteStoresQueryDto,
 } from '../dto/user-stores.dto';
 
 @ApiTags('User Stores')
@@ -60,6 +62,32 @@ export class UserStoresController {
   ) {
     const data = await this.userStoresService.getStores(query, user?.userId);
     return { message: 'Stores discovered successfully', data };
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // GET /api/user/stores/favorites
+  // ─────────────────────────────────────────────────────────────────────────
+
+  @Get('favorites')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, UserOnlyGuard)
+  @ApiOperation({
+    summary: 'Get Favorite Stores',
+    description:
+      'Fetch list of stores marked as favorite by the logged-in user with distance, ratings, and pagination.',
+  })
+  @ApiResponse({ status: 200, description: 'Favorite stores fetched successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized', type: ApiErrorResponseDto })
+  @ApiResponse({ status: 403, description: 'Customer only (USER_ONLY)', type: ApiErrorResponseDto })
+  async getFavoriteStores(
+    @CurrentUser() user: User,
+    @Query() query: FavoriteStoresQueryDto,
+  ) {
+    const data = await this.userStoresService.getFavoriteStores(
+      user.userId,
+      query,
+    );
+    return { message: 'Favorite stores fetched successfully', data };
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -190,5 +218,34 @@ export class UserStoresController {
       dto,
     );
     return { message: 'Enquiry sent successfully', data };
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // POST /api/user/stores/:storeId/favorite
+  // ─────────────────────────────────────────────────────────────────────────
+
+  @Post(':storeId/favorite')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, UserOnlyGuard)
+  @ApiOperation({
+    summary: 'Toggle Favorite Store',
+    description:
+      'Add or remove a store from current user favorites. Returns updated isFavorite status and user-friendly message.',
+  })
+  @ApiParam({ name: 'storeId', description: 'Store UUID or public vendor ID (e.g. VND100001)' })
+  @ApiResponse({ status: 200, description: 'Favorite status toggled successfully', type: ToggleFavoriteResponseDto })
+  @ApiResponse({ status: 401, description: 'Unauthorized', type: ApiErrorResponseDto })
+  @ApiResponse({ status: 403, description: 'Customer only (USER_ONLY)', type: ApiErrorResponseDto })
+  @ApiResponse({ status: 404, description: 'Store not found (PROFILE_NOT_FOUND)', type: ApiErrorResponseDto })
+  async toggleFavorite(
+    @CurrentUser() user: User,
+    @Param('storeId') storeId: string,
+  ) {
+    const data = await this.userStoresService.toggleFavorite(
+      user.userId,
+      storeId,
+    );
+    return { message: data.message, data };
   }
 }

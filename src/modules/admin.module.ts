@@ -8,11 +8,13 @@ import { AdminJwtStrategy } from '../common/strategies/admin-jwt.strategy';
 import { AdminJwtGuard } from '../common/guards/admin-jwt.guard';
 import { PrismaModule } from './prisma.module';
 import { S3Service } from '../services/s3.service';
+import { NotificationModule } from './notification.module';
 
 @Module({
   imports: [
     PrismaModule,
     PassportModule,
+    NotificationModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

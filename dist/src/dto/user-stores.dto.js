@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CreateStoreEnquiryDto = exports.CreateStoreRatingDto = exports.StoreReviewItemDto = exports.StoreRatingsQueryDto = exports.StoreJewelleryItemDto = exports.StoreJewelleryQueryDto = exports.StoreDetailsDto = exports.RatingSummaryDto = exports.StoreListItemDto = exports.StoreQueryDto = exports.StoreSortBy = void 0;
+exports.FavoriteStoresQueryDto = exports.ToggleFavoriteResponseDto = exports.CreateStoreEnquiryDto = exports.CreateStoreRatingDto = exports.StoreReviewItemDto = exports.StoreRatingsQueryDto = exports.StoreJewelleryItemDto = exports.StoreJewelleryQueryDto = exports.StoreDetailsDto = exports.RatingSummaryDto = exports.StoreListItemDto = exports.StoreQueryDto = exports.StoreSortBy = void 0;
 const swagger_1 = require("@nestjs/swagger");
 const class_transformer_1 = require("class-transformer");
 const class_validator_1 = require("class-validator");
@@ -142,6 +142,10 @@ __decorate([
     __metadata("design:type", Boolean)
 ], StoreListItemDto.prototype, "isOpen", void 0);
 __decorate([
+    (0, swagger_1.ApiProperty)({ example: false, description: 'Whether the store is marked favorite by current user' }),
+    __metadata("design:type", Boolean)
+], StoreListItemDto.prototype, "isFavorite", void 0);
+__decorate([
     (0, swagger_1.ApiProperty)({ example: '10:00', nullable: true }),
     __metadata("design:type", Object)
 ], StoreListItemDto.prototype, "storeOpeningTime", void 0);
@@ -242,6 +246,10 @@ __decorate([
     (0, swagger_1.ApiProperty)({ example: true }),
     __metadata("design:type", Boolean)
 ], StoreDetailsDto.prototype, "isOpen", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ example: false, description: 'Whether the store is marked favorite by current user' }),
+    __metadata("design:type", Boolean)
+], StoreDetailsDto.prototype, "isFavorite", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ type: RatingSummaryDto }),
     __metadata("design:type", RatingSummaryDto)
@@ -464,4 +472,53 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], CreateStoreEnquiryDto.prototype, "jewelleryId", void 0);
+class ToggleFavoriteResponseDto {
+}
+exports.ToggleFavoriteResponseDto = ToggleFavoriteResponseDto;
+__decorate([
+    (0, swagger_1.ApiProperty)({ example: true, description: 'Whether the store is now in favorites' }),
+    __metadata("design:type", Boolean)
+], ToggleFavoriteResponseDto.prototype, "isFavorite", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ example: 'Store added to favorites' }),
+    __metadata("design:type", String)
+], ToggleFavoriteResponseDto.prototype, "message", void 0);
+class FavoriteStoresQueryDto {
+    constructor() {
+        this.page = 1;
+        this.limit = 10;
+    }
+}
+exports.FavoriteStoresQueryDto = FavoriteStoresQueryDto;
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ example: 28.6139, description: 'User current latitude (optional - automatically uses user profile location if logged in)' }),
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsNumber)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Number)
+], FavoriteStoresQueryDto.prototype, "latitude", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ example: 77.209, description: 'User current longitude (optional - automatically uses user profile location if logged in)' }),
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsNumber)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Number)
+], FavoriteStoresQueryDto.prototype, "longitude", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ example: 1, default: 1 }),
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.Min)(1),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Number)
+], FavoriteStoresQueryDto.prototype, "page", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ example: 10, default: 10 }),
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.Min)(1),
+    (0, class_validator_1.Max)(50),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Number)
+], FavoriteStoresQueryDto.prototype, "limit", void 0);
 //# sourceMappingURL=user-stores.dto.js.map

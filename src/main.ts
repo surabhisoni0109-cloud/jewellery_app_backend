@@ -47,9 +47,51 @@ async function bootstrap() {
     }
   });
 
+  // Serve uploaded files from public/uploads at /uploads
+  const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+  app.use('/uploads', express.static(uploadsDir));
+
   // Serve Next.js Admin Portal static export from public/admin at /admin
   const adminStaticDir = path.join(process.cwd(), 'public', 'admin');
   if (fs.existsSync(adminStaticDir)) {
+    // Intercept and resolve Next.js App Router RSC prefetch requests
+    // e.g. /users/__next.!KHBhZ2VzKQ.users.__PAGE__.txt -> /users/__next.!KHBhZ2VzKQ/users/__PAGE__.txt
+    app.use('/admin', (req: any, res: any, next: any) => {
+      if (req.path.includes('__next.') && req.path.endsWith('.txt')) {
+        const cleanPath = req.path.replace(/^\//, '');
+        const directFile = path.join(adminStaticDir, cleanPath);
+        if (fs.existsSync(directFile) && fs.statSync(directFile).isFile()) {
+          res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+          return res.sendFile(directFile);
+        }
+
+        const parts = cleanPath.split('/');
+        const fileName = parts.pop();
+        if (fileName && fileName.endsWith('.__PAGE__.txt')) {
+          const baseName = fileName.replace('.__PAGE__.txt', '');
+          if (baseName.startsWith('__next.')) {
+            const remainder = baseName.slice('__next.'.length);
+            const segments = remainder.split('.');
+            const candidatePath = path.join(
+              adminStaticDir,
+              ...parts,
+              `__next.${segments[0]}`,
+              ...segments.slice(1),
+              '__PAGE__.txt',
+            );
+            if (fs.existsSync(candidatePath) && fs.statSync(candidatePath).isFile()) {
+              res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+              return res.sendFile(candidatePath);
+            }
+          }
+        }
+      }
+      next();
+    });
+
     app.use(
       '/admin',
       express.static(adminStaticDir, {
@@ -60,9 +102,16 @@ async function bootstrap() {
       if (path.extname(req.path)) {
         return next();
       }
-      const potentialHtml = path.join(adminStaticDir, `${req.path.replace(/^\//, '')}.html`);
-      if (fs.existsSync(potentialHtml)) {
-        return res.sendFile(potentialHtml);
+      const cleanPath = req.path.replace(/^\//, '').replace(/\/+$/, '');
+      if (cleanPath) {
+        const potentialHtml = path.join(adminStaticDir, `${cleanPath}.html`);
+        if (fs.existsSync(potentialHtml) && fs.statSync(potentialHtml).isFile()) {
+          return res.sendFile(potentialHtml);
+        }
+        const potentialIndexHtml = path.join(adminStaticDir, cleanPath, 'index.html');
+        if (fs.existsSync(potentialIndexHtml) && fs.statSync(potentialIndexHtml).isFile()) {
+          return res.sendFile(potentialIndexHtml);
+        }
       }
       res.sendFile(path.join(adminStaticDir, 'index.html'));
     });
@@ -131,3 +180,5 @@ async function bootstrap() {
 }
 
 bootstrap();
+
+

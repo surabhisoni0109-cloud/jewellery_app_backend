@@ -106,8 +106,22 @@ model VendorProfile {
   storeViews        VendorStoreView[]
   enquiries         VendorEnquiry[]
   ratings           VendorRating[]
+  favoriteStores    UserFavoriteStore[]
 
   @@index([userId])
+}
+
+model UserFavoriteStore {
+  id              String        @id @default(uuid())
+  userId          String
+  vendorProfileId String
+  createdAt       DateTime      @default(now())
+
+  vendorProfile   VendorProfile @relation(fields: [vendorProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, vendorProfileId])
+  @@index([userId])
+  @@index([vendorProfileId])
 }
 
 model JewelleryShowcase {

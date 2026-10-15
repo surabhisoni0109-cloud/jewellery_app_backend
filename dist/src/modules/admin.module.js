@@ -17,6 +17,7 @@ const admin_jwt_strategy_1 = require("../common/strategies/admin-jwt.strategy");
 const admin_jwt_guard_1 = require("../common/guards/admin-jwt.guard");
 const prisma_module_1 = require("./prisma.module");
 const s3_service_1 = require("../services/s3.service");
+const notification_module_1 = require("./notification.module");
 let AdminModule = class AdminModule {
 };
 exports.AdminModule = AdminModule;
@@ -25,6 +26,7 @@ exports.AdminModule = AdminModule = __decorate([
         imports: [
             prisma_module_1.PrismaModule,
             passport_1.PassportModule,
+            notification_module_1.NotificationModule,
             jwt_1.JwtModule.registerAsync({
                 imports: [config_1.ConfigModule],
                 inject: [config_1.ConfigService],

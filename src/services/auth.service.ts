@@ -292,13 +292,27 @@ export class AuthService {
 
   /**
    * Resolves the onboarding state for a user or vendor.
-   * Regular buyers are always considered onboarded. Vendors reflect their database progress.
+   * Buyers reflect their UserProfile progress (default: PENDING & isOnboarded = false).
+   * Vendors reflect their database progress.
    */
   async getOnboardingStatus(user: User): Promise<{ isOnboarded: boolean; onboardingStep: OnboardingStep }> {
     if (user.type === UserType.USER) {
+      if (this.prisma) {
+        const userProfile = await this.prisma.userProfile.findUnique({
+          where: { userId: user.userId },
+          select: { isOnboarded: true },
+        });
+
+        const isOnboarded = userProfile?.isOnboarded ?? false;
+        return {
+          isOnboarded,
+          onboardingStep: isOnboarded ? OnboardingStep.COMPLETED : OnboardingStep.PENDING,
+        };
+      }
+
       return {
-        isOnboarded: true,
-        onboardingStep: OnboardingStep.COMPLETED,
+        isOnboarded: false,
+        onboardingStep: OnboardingStep.PENDING,
       };
     }
 

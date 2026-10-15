@@ -56,19 +56,16 @@ let UsersService = class UsersService {
     }
     async generateNextUserId(type) {
         const prefix = type === client_1.UserType.USER ? 'USR' : 'VND';
-        const count = await this.prisma.user.count({
-            where: { type },
-        });
-        const nextNumber = 100001 + count;
-        let candidateId = `${prefix}${nextNumber}`;
-        let exists = await this.findByUserId(candidateId);
-        let offset = 0;
-        while (exists) {
-            offset++;
-            candidateId = `${prefix}${nextNumber + offset}`;
-            exists = await this.findByUserId(candidateId);
+        const seqName = type === client_1.UserType.USER ? 'user_id_seq' : 'vendor_id_seq';
+        if (this.prisma?.$queryRawUnsafe) {
+            const result = await this.prisma.$queryRawUnsafe(`SELECT nextval('${seqName}') as val;`);
+            const nextNumber = result[0]?.val;
+            if (nextNumber !== undefined && nextNumber !== null) {
+                return `${prefix}${nextNumber}`;
+            }
         }
-        return candidateId;
+        const count = await this.prisma.user.count({ where: { type } });
+        return `${prefix}${100001 + count}`;
     }
     async createUser(data) {
         const normalizedEmail = this.normalizeEmail(data.email);
@@ -84,7 +81,7 @@ let UsersService = class UsersService {
             throw new custom_exception_1.CustomException('An account with this email address already exists for the specified type', 'EMAIL_ALREADY_EXISTS', common_1.HttpStatus.CONFLICT);
         }
         const userId = await this.generateNextUserId(data.type);
-        return this.prisma.user.create({
+        const user = await this.prisma.user.create({
             data: {
                 userId,
                 type: data.type,
@@ -96,6 +93,20 @@ let UsersService = class UsersService {
                 isMobileVerified: true,
             },
         });
+        if (data.type === client_1.UserType.USER) {
+            await this.prisma.userProfile.upsert({
+                where: { userId },
+                create: { userId, isOnboarded: false },
+                update: {
+                    gender: null,
+                    dob: null,
+                    profilePicture: null,
+                    location: client_1.Prisma.DbNull,
+                    isOnboarded: false,
+                },
+            });
+        }
+        return user;
     }
 };
 exports.UsersService = UsersService;

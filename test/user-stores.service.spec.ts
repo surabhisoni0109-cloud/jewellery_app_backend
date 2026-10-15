@@ -83,6 +83,12 @@ describe('UserStoresService', () => {
     notification: {
       create: jest.fn().mockResolvedValue({ id: 'notif-1' }),
     },
+    userFavoriteStore: {
+      findMany: jest.fn(),
+      findUnique: jest.fn(),
+      create: jest.fn(),
+      delete: jest.fn(),
+    },
   };
 
   beforeEach(async () => {
@@ -305,6 +311,68 @@ describe('UserStoresService', () => {
           title: 'New Customer Enquiry',
         }),
       });
+    });
+  });
+
+  describe('toggleFavorite', () => {
+    it('should add store to favorites if not already favorited', async () => {
+      mockPrismaService.vendorProfile.findFirst.mockResolvedValue(mockStore);
+      mockPrismaService.userFavoriteStore.findUnique.mockResolvedValue(null);
+      mockPrismaService.userFavoriteStore.create.mockResolvedValue({
+        id: 'fav-1',
+        userId: 'USR100001',
+        vendorProfileId: 'store-uuid-1',
+      });
+
+      const res = await service.toggleFavorite('USR100001', 'store-uuid-1');
+
+      expect(res.isFavorite).toBe(true);
+      expect(res.message).toBe('Store added to favorites');
+      expect(mockPrismaService.userFavoriteStore.create).toHaveBeenCalledWith({
+        data: {
+          userId: 'USR100001',
+          vendorProfileId: 'store-uuid-1',
+        },
+      });
+    });
+
+    it('should remove store from favorites if already favorited', async () => {
+      mockPrismaService.vendorProfile.findFirst.mockResolvedValue(mockStore);
+      mockPrismaService.userFavoriteStore.findUnique.mockResolvedValue({
+        id: 'fav-1',
+        userId: 'USR100001',
+        vendorProfileId: 'store-uuid-1',
+      });
+      mockPrismaService.userFavoriteStore.delete.mockResolvedValue({ id: 'fav-1' });
+
+      const res = await service.toggleFavorite('USR100001', 'store-uuid-1');
+
+      expect(res.isFavorite).toBe(false);
+      expect(res.message).toBe('Store removed from favorites');
+      expect(mockPrismaService.userFavoriteStore.delete).toHaveBeenCalledWith({
+        where: { id: 'fav-1' },
+      });
+    });
+  });
+
+  describe('getFavoriteStores', () => {
+    it('should list user favorite stores with details', async () => {
+      mockPrismaService.userFavoriteStore.findMany.mockResolvedValue([
+        {
+          id: 'fav-1',
+          userId: 'USR100001',
+          vendorProfileId: 'store-uuid-1',
+          createdAt: new Date('2026-10-01'),
+          vendorProfile: mockStore,
+        },
+      ]);
+
+      const res = await service.getFavoriteStores('USR100001', {});
+
+      expect(res.items.length).toBe(1);
+      expect(res.items[0].storeName).toBe('Soni Jewellers');
+      expect(res.items[0].isFavorite).toBe(true);
+      expect(res.pagination.total).toBe(1);
     });
   });
 });

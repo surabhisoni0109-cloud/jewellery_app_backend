@@ -49,6 +49,9 @@ describe('AuthService', () => {
     vendorProfile: {
       findUnique: jest.fn(),
     },
+    userProfile: {
+      findUnique: jest.fn(),
+    },
   };
 
   beforeEach(async () => {
@@ -170,23 +173,42 @@ describe('AuthService', () => {
   });
 
   describe('decoupled methods', () => {
-    it('issueSessionAfterVerification should generate valid JWT token with claims and default completed onboarding for buyers', async () => {
+    it('issueSessionAfterVerification should generate valid JWT token with claims and default pending onboarding for buyers without profile', async () => {
       const mockUser = {
         userId: 'USR100001',
         type: UserType.USER,
         mobileNumber: '9876543210',
       } as any;
 
+      mockPrismaService.userProfile.findUnique.mockResolvedValue(null);
+
       const session = await service.issueSessionAfterVerification(mockUser);
 
       expect(session.token).toBe('mocked_jwt_token_string');
-      expect(session.isOnboarded).toBe(true);
-      expect(session.onboardingStep).toBe(OnboardingStep.COMPLETED);
+      expect(session.isOnboarded).toBe(false);
+      expect(session.onboardingStep).toBe(OnboardingStep.PENDING);
       expect(mockJwtService.sign).toHaveBeenCalledWith({
         sub: 'USR100001',
         type: UserType.USER,
         mobileNumber: '9876543210',
       });
+    });
+
+    it('issueSessionAfterVerification should return completed onboarding when buyer has completed onboarding', async () => {
+      const mockUser = {
+        userId: 'USR100001',
+        type: UserType.USER,
+        mobileNumber: '9876543210',
+      } as any;
+
+      mockPrismaService.userProfile.findUnique.mockResolvedValue({
+        isOnboarded: true,
+      });
+
+      const session = await service.issueSessionAfterVerification(mockUser);
+
+      expect(session.isOnboarded).toBe(true);
+      expect(session.onboardingStep).toBe(OnboardingStep.COMPLETED);
     });
 
     it('issueSessionAfterVerification should include vendor onboarding progress', async () => {

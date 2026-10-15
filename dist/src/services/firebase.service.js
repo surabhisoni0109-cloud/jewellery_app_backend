@@ -27,13 +27,32 @@ let FirebaseService = FirebaseService_1 = class FirebaseService {
     onModuleInit() {
         this.initializeFirebase();
     }
+    sanitizeEnvString(val) {
+        if (!val)
+            return undefined;
+        let s = val.trim();
+        if (s.endsWith(','))
+            s = s.slice(0, -1).trim();
+        if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
+            s = s.slice(1, -1).trim();
+        }
+        if (s.endsWith(','))
+            s = s.slice(0, -1).trim();
+        return s || undefined;
+    }
     formatPrivateKey(key) {
         let formatted = key.trim();
+        if (formatted.endsWith(',')) {
+            formatted = formatted.slice(0, -1).trim();
+        }
         if ((formatted.startsWith('"') && formatted.endsWith('"')) ||
             (formatted.startsWith("'") && formatted.endsWith("'"))) {
-            formatted = formatted.slice(1, -1);
+            formatted = formatted.slice(1, -1).trim();
         }
-        return formatted.replace(/\\n/g, '\n');
+        if (formatted.endsWith(',')) {
+            formatted = formatted.slice(0, -1).trim();
+        }
+        return formatted.replace(/\r/g, '').replace(/\\n/g, '\n');
     }
     initializeFirebase() {
         try {
@@ -44,8 +63,8 @@ let FirebaseService = FirebaseService_1 = class FirebaseService {
                 this.logger.log('Existing Firebase Admin SDK application reused.');
                 return;
             }
-            const projectId = this.configService.get('FIREBASE_PROJECT_ID');
-            const clientEmail = this.configService.get('FIREBASE_CLIENT_EMAIL');
+            const projectId = this.sanitizeEnvString(this.configService.get('FIREBASE_PROJECT_ID'));
+            const clientEmail = this.sanitizeEnvString(this.configService.get('FIREBASE_CLIENT_EMAIL'));
             const privateKeyRaw = this.configService.get('FIREBASE_PRIVATE_KEY');
             if (projectId && clientEmail && privateKeyRaw) {
                 const privateKey = this.formatPrivateKey(privateKeyRaw);

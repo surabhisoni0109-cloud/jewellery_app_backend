@@ -1,5 +1,5 @@
 import { PrismaService } from './prisma.service';
-import { StoreQueryDto, StoreDetailsDto, StoreJewelleryQueryDto, StoreRatingsQueryDto, CreateStoreRatingDto, CreateStoreEnquiryDto } from '../dto/user-stores.dto';
+import { StoreQueryDto, StoreDetailsDto, StoreJewelleryQueryDto, StoreRatingsQueryDto, CreateStoreRatingDto, CreateStoreEnquiryDto, FavoriteStoresQueryDto } from '../dto/user-stores.dto';
 export declare class UserStoresService {
     private readonly prisma;
     constructor(prisma: PrismaService);
@@ -8,11 +8,11 @@ export declare class UserStoresService {
         userId: string;
         createdAt: Date;
         updatedAt: Date;
-        isOnboarded: boolean;
-        onboardingStep: import(".prisma/client").$Enums.OnboardingStep;
         gender: import(".prisma/client").$Enums.Gender | null;
         dob: Date | null;
         profilePicture: string | null;
+        isOnboarded: boolean;
+        onboardingStep: import(".prisma/client").$Enums.OnboardingStep;
         storeName: string | null;
         storeDescription: string | null;
         storeLogo: string | null;
@@ -42,6 +42,7 @@ export declare class UserStoresService {
             totalReviews: number;
             jewelleryStartingPrice: number | null;
             isOpen: boolean;
+            isFavorite: boolean;
             storeOpeningTime: string | null;
             storeClosingTime: string | null;
             createdAt: Date;
@@ -121,5 +122,18 @@ export declare class UserStoresService {
         message: string;
         jewelleryId: string | null;
         createdAt: Date;
+    }>;
+    toggleFavorite(userId: string, storeId: string): Promise<{
+        isFavorite: boolean;
+        message: string;
+    }>;
+    getFavoriteStores(userId: string, query: FavoriteStoresQueryDto): Promise<{
+        items: any;
+        pagination: {
+            total: any;
+            page: number;
+            limit: number;
+            totalPages: number;
+        };
     }>;
 }

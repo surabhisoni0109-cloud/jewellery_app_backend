@@ -56,6 +56,15 @@ let AdminController = class AdminController {
     toggleVendorStatus(id) {
         return this.adminService.toggleVendorStatus(id);
     }
+    uploadNotificationImage(file) {
+        return this.adminService.uploadNotificationImage(file);
+    }
+    broadcastNotification(dto, image) {
+        return this.adminService.broadcastNotification(dto, image);
+    }
+    getBroadcastHistory(page, limit) {
+        return this.adminService.getBroadcastHistory(page, limit);
+    }
 };
 exports.AdminController = AdminController;
 __decorate([
@@ -160,6 +169,44 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], AdminController.prototype, "toggleVendorStatus", null);
+__decorate([
+    (0, common_1.Post)('notifications/upload-image'),
+    (0, common_1.UseGuards)(admin_jwt_guard_1.AdminJwtGuard),
+    (0, swagger_1.ApiBearerAuth)('bearer'),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('image', { storage: (0, multer_1.memoryStorage)() })),
+    (0, swagger_1.ApiConsumes)('multipart/form-data'),
+    (0, swagger_1.ApiOperation)({ summary: 'Upload notification banner image' }),
+    __param(0, (0, common_1.UploadedFile)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], AdminController.prototype, "uploadNotificationImage", null);
+__decorate([
+    (0, common_1.Post)('notifications/broadcast'),
+    (0, common_1.UseGuards)(admin_jwt_guard_1.AdminJwtGuard),
+    (0, swagger_1.ApiBearerAuth)('bearer'),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('image', { storage: (0, multer_1.memoryStorage)() })),
+    (0, swagger_1.ApiConsumes)('multipart/form-data', 'application/json'),
+    (0, swagger_1.ApiOperation)({ summary: 'Broadcast push and in-app notification to Users, Vendors, or Both' }),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.UploadedFile)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [admin_dto_1.AdminBroadcastNotificationDto, Object]),
+    __metadata("design:returntype", void 0)
+], AdminController.prototype, "broadcastNotification", null);
+__decorate([
+    (0, common_1.Get)('notifications/history'),
+    (0, common_1.UseGuards)(admin_jwt_guard_1.AdminJwtGuard),
+    (0, swagger_1.ApiBearerAuth)('bearer'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get broadcast notification history' }),
+    (0, swagger_1.ApiQuery)({ name: 'page', required: false }),
+    (0, swagger_1.ApiQuery)({ name: 'limit', required: false }),
+    __param(0, (0, common_1.Query)('page', new common_1.DefaultValuePipe(1), common_1.ParseIntPipe)),
+    __param(1, (0, common_1.Query)('limit', new common_1.DefaultValuePipe(10), common_1.ParseIntPipe)),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, Number]),
+    __metadata("design:returntype", void 0)
+], AdminController.prototype, "getBroadcastHistory", null);
 exports.AdminController = AdminController = __decorate([
     (0, swagger_1.ApiTags)('Admin'),
     (0, common_1.Controller)('admin'),

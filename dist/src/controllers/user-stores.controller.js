@@ -31,6 +31,10 @@ let UserStoresController = class UserStoresController {
         const data = await this.userStoresService.getStores(query, user?.userId);
         return { message: 'Stores discovered successfully', data };
     }
+    async getFavoriteStores(user, query) {
+        const data = await this.userStoresService.getFavoriteStores(user.userId, query);
+        return { message: 'Favorite stores fetched successfully', data };
+    }
     async getStoreDetails(storeId, user) {
         const data = await this.userStoresService.getStoreDetails(storeId, user?.userId);
         return { message: 'Store details fetched successfully', data };
@@ -51,6 +55,10 @@ let UserStoresController = class UserStoresController {
         const data = await this.userStoresService.createEnquiry(user.userId, storeId, dto);
         return { message: 'Enquiry sent successfully', data };
     }
+    async toggleFavorite(user, storeId) {
+        const data = await this.userStoresService.toggleFavorite(user.userId, storeId);
+        return { message: data.message, data };
+    }
 };
 exports.UserStoresController = UserStoresController;
 __decorate([
@@ -67,6 +75,23 @@ __decorate([
     __metadata("design:paramtypes", [user_stores_dto_1.StoreQueryDto, Object]),
     __metadata("design:returntype", Promise)
 ], UserStoresController.prototype, "getStores", null);
+__decorate([
+    (0, common_1.Get)('favorites'),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, user_only_guard_1.UserOnlyGuard),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Get Favorite Stores',
+        description: 'Fetch list of stores marked as favorite by the logged-in user with distance, ratings, and pagination.',
+    }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: 'Favorite stores fetched successfully' }),
+    (0, swagger_1.ApiResponse)({ status: 401, description: 'Unauthorized', type: api_response_dto_1.ApiErrorResponseDto }),
+    (0, swagger_1.ApiResponse)({ status: 403, description: 'Customer only (USER_ONLY)', type: api_response_dto_1.ApiErrorResponseDto }),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Query)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, user_stores_dto_1.FavoriteStoresQueryDto]),
+    __metadata("design:returntype", Promise)
+], UserStoresController.prototype, "getFavoriteStores", null);
 __decorate([
     (0, common_1.Get)(':storeId'),
     (0, common_1.UseGuards)(optional_jwt_auth_guard_1.OptionalJwtAuthGuard),
@@ -159,6 +184,26 @@ __decorate([
     __metadata("design:paramtypes", [Object, String, user_stores_dto_1.CreateStoreEnquiryDto]),
     __metadata("design:returntype", Promise)
 ], UserStoresController.prototype, "createEnquiry", null);
+__decorate([
+    (0, common_1.Post)(':storeId/favorite'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, user_only_guard_1.UserOnlyGuard),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Toggle Favorite Store',
+        description: 'Add or remove a store from current user favorites. Returns updated isFavorite status and user-friendly message.',
+    }),
+    (0, swagger_1.ApiParam)({ name: 'storeId', description: 'Store UUID or public vendor ID (e.g. VND100001)' }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: 'Favorite status toggled successfully', type: user_stores_dto_1.ToggleFavoriteResponseDto }),
+    (0, swagger_1.ApiResponse)({ status: 401, description: 'Unauthorized', type: api_response_dto_1.ApiErrorResponseDto }),
+    (0, swagger_1.ApiResponse)({ status: 403, description: 'Customer only (USER_ONLY)', type: api_response_dto_1.ApiErrorResponseDto }),
+    (0, swagger_1.ApiResponse)({ status: 404, description: 'Store not found (PROFILE_NOT_FOUND)', type: api_response_dto_1.ApiErrorResponseDto }),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Param)('storeId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", Promise)
+], UserStoresController.prototype, "toggleFavorite", null);
 exports.UserStoresController = UserStoresController = __decorate([
     (0, swagger_1.ApiTags)('User Stores'),
     (0, common_1.Controller)('user/stores'),

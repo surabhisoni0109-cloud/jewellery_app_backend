@@ -2,13 +2,15 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from './prisma.service';
 import { S3Service } from './s3.service';
-import { AdminLoginDto, AdminUpdateProfileDto, AdminChangePasswordDto } from '../dto/admin.dto';
+import { AdminLoginDto, AdminUpdateProfileDto, AdminChangePasswordDto, AdminBroadcastNotificationDto } from '../dto/admin.dto';
+import { NotificationService } from './notification.service';
 export declare class AdminService {
     private readonly prisma;
     private readonly jwtService;
     private readonly configService;
     private readonly s3Service;
-    constructor(prisma: PrismaService, jwtService: JwtService, configService: ConfigService, s3Service: S3Service);
+    private readonly notificationService;
+    constructor(prisma: PrismaService, jwtService: JwtService, configService: ConfigService, s3Service: S3Service, notificationService: NotificationService);
     login(dto: AdminLoginDto): Promise<{
         access_token: string;
         admin: {
@@ -110,6 +112,41 @@ export declare class AdminService {
         isMobileVerified: boolean;
         createdAt: Date;
         updatedAt: Date;
+    }>;
+    uploadNotificationImage(file: Express.Multer.File): Promise<{
+        url: string;
+    }>;
+    broadcastNotification(dto: AdminBroadcastNotificationDto, imageFile?: Express.Multer.File): Promise<{
+        message: string;
+        targetAudience: string;
+        totalUsers: number;
+        sentCount: number;
+        failureCount: number;
+    } | {
+        success: boolean;
+        sentCount: number;
+        targetUsers: number;
+        failureCount?: undefined;
+        message: string;
+        targetAudience: string;
+        totalUsers: number;
+    } | {
+        success: boolean;
+        targetUsers: number;
+        sentCount: number;
+        failureCount: number;
+        message: string;
+        targetAudience: string;
+        totalUsers: number;
+    }>;
+    getBroadcastHistory(page?: number, limit?: number): Promise<{
+        data: any[];
+        meta: {
+            total: number;
+            page: number;
+            limit: number;
+            totalPages: number;
+        };
     }>;
     private sanitizeAdmin;
 }

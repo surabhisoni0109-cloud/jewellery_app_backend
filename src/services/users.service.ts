@@ -1,5 +1,5 @@
 import { Injectable, HttpStatus } from '@nestjs/common';
-import { User, UserType } from '@prisma/client';
+import { Prisma, User, UserType } from '@prisma/client';
 import { PrismaService } from './prisma.service';
 import { CustomException } from '../common/exceptions/custom-exception';
 
@@ -76,28 +76,26 @@ export class UsersService {
   }
 
   /**
-   * Generates a unique public userId (USR100001 for USER, VND100001 for VENDOR).
+   * Generates a unique, atomic public userId (USR100001 for USER, VND100001 for VENDOR)
+   * using PostgreSQL native sequences to prevent race conditions and duplicate IDs.
    */
   private async generateNextUserId(type: UserType): Promise<string> {
     const prefix = type === UserType.USER ? 'USR' : 'VND';
-    const count = await this.prisma.user.count({
-      where: { type },
-    });
-    
-    // Generates IDs starting from 100001
-    const nextNumber = 100001 + count;
-    let candidateId = `${prefix}${nextNumber}`;
+    const seqName = type === UserType.USER ? 'user_id_seq' : 'vendor_id_seq';
 
-    // Verify uniqueness in case of race condition or custom data
-    let exists = await this.findByUserId(candidateId);
-    let offset = 0;
-    while (exists) {
-      offset++;
-      candidateId = `${prefix}${nextNumber + offset}`;
-      exists = await this.findByUserId(candidateId);
+    if (this.prisma?.$queryRawUnsafe) {
+      const result = await this.prisma.$queryRawUnsafe<{ val: bigint | number | string }[]>(
+        `SELECT nextval('${seqName}') as val;`,
+      );
+      const nextNumber = result[0]?.val;
+      if (nextNumber !== undefined && nextNumber !== null) {
+        return `${prefix}${nextNumber}`;
+      }
     }
 
-    return candidateId;
+    // Fallback for test/mocked environments
+    const count = await this.prisma.user.count({ where: { type } });
+    return `${prefix}${100001 + count}`;
   }
 
   /**
@@ -131,7 +129,7 @@ export class UsersService {
 
     const userId = await this.generateNextUserId(data.type);
 
-    return this.prisma.user.create({
+    const user = await this.prisma.user.create({
       data: {
         userId,
         type: data.type,
@@ -143,5 +141,21 @@ export class UsersService {
         isMobileVerified: true,
       },
     });
+
+    if (data.type === UserType.USER) {
+      await this.prisma.userProfile.upsert({
+        where: { userId },
+        create: { userId, isOnboarded: false },
+        update: {
+          gender: null,
+          dob: null,
+          profilePicture: null,
+          location: Prisma.DbNull,
+          isOnboarded: false,
+        },
+      });
+    }
+
+    return user;
   }
 }

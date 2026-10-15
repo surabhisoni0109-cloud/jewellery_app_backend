@@ -90,6 +90,18 @@ let UserStoresService = class UserStoresService {
                 },
             },
         });
+        let favoriteStoreIds = new Set();
+        if (userId) {
+            try {
+                const favs = await this.prisma.userFavoriteStore.findMany({
+                    where: { userId },
+                    select: { vendorProfileId: true },
+                });
+                favoriteStoreIds = new Set(favs.map((f) => f.vendorProfileId));
+            }
+            catch {
+            }
+        }
         let items = stores.map((store) => {
             const loc = store.storeLocation || {};
             const distanceKm = calculateDistanceKm(userLat, userLng, loc.latitude != null ? Number(loc.latitude) : null, loc.longitude != null ? Number(loc.longitude) : null);
@@ -114,6 +126,7 @@ let UserStoresService = class UserStoresService {
                     ? Number(store.jewelleryStartingPrice)
                     : null,
                 isOpen,
+                isFavorite: favoriteStoreIds.has(store.id),
                 storeOpeningTime: store.storeOpeningTime,
                 storeClosingTime: store.storeClosingTime,
                 createdAt: store.createdAt,
@@ -251,6 +264,22 @@ let UserStoresService = class UserStoresService {
         const loc = store.storeLocation || {};
         const distanceKm = calculateDistanceKm(userLat, userLng, loc.latitude != null ? Number(loc.latitude) : null, loc.longitude != null ? Number(loc.longitude) : null);
         const isOpen = isStoreCurrentlyOpen(store.storeOpeningTime, store.storeClosingTime);
+        let isFavorite = false;
+        if (viewerUserId) {
+            try {
+                const fav = await this.prisma.userFavoriteStore.findUnique({
+                    where: {
+                        userId_vendorProfileId: {
+                            userId: viewerUserId,
+                            vendorProfileId: store.id,
+                        },
+                    },
+                });
+                isFavorite = !!fav;
+            }
+            catch {
+            }
+        }
         return {
             id: store.id,
             userId: store.userId,
@@ -272,6 +301,7 @@ let UserStoresService = class UserStoresService {
             storeClosingTime: store.storeClosingTime,
             storeFoundedYear: store.storeFoundedYear,
             isOpen,
+            isFavorite,
             ratingSummary: {
                 averageRating,
                 totalReviews,
@@ -498,6 +528,119 @@ let UserStoresService = class UserStoresService {
             message: enquiry.message,
             jewelleryId: enquiry.jewelleryId,
             createdAt: enquiry.createdAt,
+        };
+    }
+    async toggleFavorite(userId, storeId) {
+        const store = await this.resolveStore(storeId);
+        const existing = await this.prisma.userFavoriteStore.findUnique({
+            where: {
+                userId_vendorProfileId: {
+                    userId,
+                    vendorProfileId: store.id,
+                },
+            },
+        });
+        if (existing) {
+            await this.prisma.userFavoriteStore.delete({
+                where: { id: existing.id },
+            });
+            return {
+                isFavorite: false,
+                message: 'Store removed from favorites',
+            };
+        }
+        else {
+            await this.prisma.userFavoriteStore.create({
+                data: {
+                    userId,
+                    vendorProfileId: store.id,
+                },
+            });
+            return {
+                isFavorite: true,
+                message: 'Store added to favorites',
+            };
+        }
+    }
+    async getFavoriteStores(userId, query) {
+        const page = query.page ?? 1;
+        const limit = query.limit ?? 10;
+        let userLat = query.latitude;
+        let userLng = query.longitude;
+        if (userLat == null || userLng == null) {
+            try {
+                const userProfile = await this.prisma.userProfile.findUnique({
+                    where: { userId },
+                });
+                const userLoc = userProfile?.location || null;
+                if (userLoc) {
+                    if (userLat == null && userLoc.latitude != null) {
+                        userLat = Number(userLoc.latitude);
+                    }
+                    if (userLng == null && userLoc.longitude != null) {
+                        userLng = Number(userLoc.longitude);
+                    }
+                }
+            }
+            catch {
+            }
+        }
+        const favorites = await this.prisma.userFavoriteStore.findMany({
+            where: { userId },
+            include: {
+                vendorProfile: {
+                    include: {
+                        ratings: { select: { rating: true } },
+                    },
+                },
+            },
+            orderBy: { createdAt: 'desc' },
+        });
+        const items = favorites
+            .filter((fav) => fav.vendorProfile && fav.vendorProfile.isOnboarded)
+            .map((fav) => {
+            const store = fav.vendorProfile;
+            const loc = store.storeLocation || {};
+            const distanceKm = calculateDistanceKm(userLat, userLng, loc.latitude != null ? Number(loc.latitude) : null, loc.longitude != null ? Number(loc.longitude) : null);
+            const totalReviews = store.ratings?.length || 0;
+            const averageRating = totalReviews > 0
+                ? Math.round((store.ratings.reduce((acc, r) => acc + r.rating, 0) /
+                    totalReviews) *
+                    10) / 10
+                : 0;
+            const isOpen = isStoreCurrentlyOpen(store.storeOpeningTime, store.storeClosingTime);
+            return {
+                id: store.id,
+                userId: store.userId,
+                storeName: store.storeName || '',
+                storeDescription: store.storeDescription,
+                storeLogo: store.storeLogo,
+                storeCoverImage: store.storeCoverImages?.[0] || null,
+                location: store.storeLocation,
+                distanceKm,
+                averageRating,
+                totalReviews,
+                jewelleryStartingPrice: store.jewelleryStartingPrice
+                    ? Number(store.jewelleryStartingPrice)
+                    : null,
+                isOpen,
+                isFavorite: true,
+                storeOpeningTime: store.storeOpeningTime,
+                storeClosingTime: store.storeClosingTime,
+                favoritedAt: fav.createdAt,
+            };
+        });
+        const total = items.length;
+        const startIndex = (page - 1) * limit;
+        const paginatedItems = items.slice(startIndex, startIndex + limit);
+        return {
+            items: paginatedItems,
+            pagination: {
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit) || 1,
+            },
         };
     }
 };

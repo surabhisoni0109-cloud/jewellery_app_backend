@@ -19,6 +19,7 @@ export declare class FirebaseService implements OnModuleInit {
     private isConfigured;
     constructor(configService: ConfigService);
     onModuleInit(): void;
+    private sanitizeEnvString;
     private formatPrivateKey;
     private initializeFirebase;
     isReady(): boolean;

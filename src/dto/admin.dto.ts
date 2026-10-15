@@ -43,3 +43,40 @@ export class AdminChangePasswordDto {
   @MinLength(6, { message: 'New password must be at least 6 characters' })
   newPassword!: string;
 }
+
+import { Transform } from 'class-transformer';
+
+export class AdminBroadcastNotificationDto {
+  @ApiProperty({ example: 'Special Festive Discount!' })
+  @IsString()
+  @IsNotEmpty({ message: 'Title is required' })
+  title!: string;
+
+  @ApiProperty({ example: 'Get flat 20% off on jewellery making charges this weekend.' })
+  @IsString()
+  @IsNotEmpty({ message: 'Description is required' })
+  body!: string;
+
+  @ApiProperty({
+    example: ['USER', 'VENDOR'],
+    description: 'Target audience: USER, VENDOR, or both',
+    isArray: true,
+  })
+  @IsNotEmpty({ message: 'Target audience is required' })
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      try {
+        const parsed = JSON.parse(value);
+        if (Array.isArray(parsed)) return parsed;
+      } catch {}
+      return value.split(',').map((v: string) => v.trim()).filter(Boolean);
+    }
+    return value;
+  })
+  targets!: ('USER' | 'VENDOR')[];
+
+  @ApiPropertyOptional({ example: 'https://example.com/banner.jpg' })
+  @IsOptional()
+  @IsString()
+  imageUrl?: string;
+}

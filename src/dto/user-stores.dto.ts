@@ -111,6 +111,9 @@ export class StoreListItemDto {
   @ApiProperty({ example: true, description: 'Whether the store is currently open based on current time and operating hours' })
   isOpen!: boolean;
 
+  @ApiProperty({ example: false, description: 'Whether the store is marked favorite by current user' })
+  isFavorite!: boolean;
+
   @ApiProperty({ example: '10:00', nullable: true })
   storeOpeningTime!: string | null;
 
@@ -186,6 +189,9 @@ export class StoreDetailsDto {
 
   @ApiProperty({ example: true })
   isOpen!: boolean;
+
+  @ApiProperty({ example: false, description: 'Whether the store is marked favorite by current user' })
+  isFavorite!: boolean;
 
   @ApiProperty({ type: RatingSummaryDto })
   ratingSummary!: RatingSummaryDto;
@@ -356,4 +362,41 @@ export class CreateStoreEnquiryDto {
   @IsString()
   @IsOptional()
   jewelleryId?: string;
+}
+
+export class ToggleFavoriteResponseDto {
+  @ApiProperty({ example: true, description: 'Whether the store is now in favorites' })
+  isFavorite!: boolean;
+
+  @ApiProperty({ example: 'Store added to favorites' })
+  message!: string;
+}
+
+export class FavoriteStoresQueryDto {
+  @ApiPropertyOptional({ example: 28.6139, description: 'User current latitude (optional - automatically uses user profile location if logged in)' })
+  @Type(() => Number)
+  @IsNumber()
+  @IsOptional()
+  latitude?: number;
+
+  @ApiPropertyOptional({ example: 77.209, description: 'User current longitude (optional - automatically uses user profile location if logged in)' })
+  @Type(() => Number)
+  @IsNumber()
+  @IsOptional()
+  longitude?: number;
+
+  @ApiPropertyOptional({ example: 1, default: 1 })
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @IsOptional()
+  page?: number = 1;
+
+  @ApiPropertyOptional({ example: 10, default: 10 })
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(50)
+  @IsOptional()
+  limit?: number = 10;
 }

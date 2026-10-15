@@ -9,6 +9,7 @@ import {
   StoreRatingsQueryDto,
   CreateStoreRatingDto,
   CreateStoreEnquiryDto,
+  FavoriteStoresQueryDto,
 } from '../dto/user-stores.dto';
 
 function calculateDistanceKm(
@@ -118,6 +119,19 @@ export class UserStoresService {
       },
     });
 
+    let favoriteStoreIds = new Set<string>();
+    if (userId) {
+      try {
+        const favs = await (this.prisma as any).userFavoriteStore.findMany({
+          where: { userId },
+          select: { vendorProfileId: true },
+        });
+        favoriteStoreIds = new Set(favs.map((f: any) => f.vendorProfileId));
+      } catch {
+        // Fallback gracefully
+      }
+    }
+
     // Transform and calculate distance & rating for each store
     let items = stores.map((store) => {
       const loc = (store.storeLocation as any) || {};
@@ -157,6 +171,7 @@ export class UserStoresService {
           ? Number(store.jewelleryStartingPrice)
           : null,
         isOpen,
+        isFavorite: favoriteStoreIds.has(store.id),
         storeOpeningTime: store.storeOpeningTime,
         storeClosingTime: store.storeClosingTime,
         createdAt: store.createdAt,
@@ -336,6 +351,23 @@ export class UserStoresService {
       store.storeClosingTime,
     );
 
+    let isFavorite = false;
+    if (viewerUserId) {
+      try {
+        const fav = await (this.prisma as any).userFavoriteStore.findUnique({
+          where: {
+            userId_vendorProfileId: {
+              userId: viewerUserId,
+              vendorProfileId: store.id,
+            },
+          },
+        });
+        isFavorite = !!fav;
+      } catch {
+        // Fallback gracefully
+      }
+    }
+
     return {
       id: store.id,
       userId: store.userId,
@@ -357,6 +389,7 @@ export class UserStoresService {
       storeClosingTime: store.storeClosingTime,
       storeFoundedYear: store.storeFoundedYear,
       isOpen,
+      isFavorite,
       ratingSummary: {
         averageRating,
         totalReviews,
@@ -653,6 +686,150 @@ export class UserStoresService {
       message: enquiry.message,
       jewelleryId: enquiry.jewelleryId,
       createdAt: enquiry.createdAt,
+    };
+  }
+
+  /**
+   * POST /api/user/stores/:storeId/favorite
+   * Adds or removes a store from user's favorites (toggle).
+   */
+  async toggleFavorite(userId: string, storeId: string) {
+    const store = await this.resolveStore(storeId);
+
+    const existing = await (this.prisma as any).userFavoriteStore.findUnique({
+      where: {
+        userId_vendorProfileId: {
+          userId,
+          vendorProfileId: store.id,
+        },
+      },
+    });
+
+    if (existing) {
+      await (this.prisma as any).userFavoriteStore.delete({
+        where: { id: existing.id },
+      });
+      return {
+        isFavorite: false,
+        message: 'Store removed from favorites',
+      };
+    } else {
+      await (this.prisma as any).userFavoriteStore.create({
+        data: {
+          userId,
+          vendorProfileId: store.id,
+        },
+      });
+      return {
+        isFavorite: true,
+        message: 'Store added to favorites',
+      };
+    }
+  }
+
+  /**
+   * GET /api/user/stores/favorites
+   * Returns list of favorite stores for the current logged-in user.
+   */
+  async getFavoriteStores(userId: string, query: FavoriteStoresQueryDto) {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 10;
+
+    let userLat = query.latitude;
+    let userLng = query.longitude;
+
+    if (userLat == null || userLng == null) {
+      try {
+        const userProfile = await this.prisma.userProfile.findUnique({
+          where: { userId },
+        });
+        const userLoc = (userProfile?.location as any) || null;
+        if (userLoc) {
+          if (userLat == null && userLoc.latitude != null) {
+            userLat = Number(userLoc.latitude);
+          }
+          if (userLng == null && userLoc.longitude != null) {
+            userLng = Number(userLoc.longitude);
+          }
+        }
+      } catch {
+        // Fallback
+      }
+    }
+
+    const favorites = await (this.prisma as any).userFavoriteStore.findMany({
+      where: { userId },
+      include: {
+        vendorProfile: {
+          include: {
+            ratings: { select: { rating: true } },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const items = favorites
+      .filter((fav: any) => fav.vendorProfile && fav.vendorProfile.isOnboarded)
+      .map((fav: any) => {
+        const store = fav.vendorProfile;
+        const loc = (store.storeLocation as any) || {};
+        const distanceKm = calculateDistanceKm(
+          userLat,
+          userLng,
+          loc.latitude != null ? Number(loc.latitude) : null,
+          loc.longitude != null ? Number(loc.longitude) : null,
+        );
+
+        const totalReviews = store.ratings?.length || 0;
+        const averageRating =
+          totalReviews > 0
+            ? Math.round(
+                (store.ratings.reduce((acc: number, r: any) => acc + r.rating, 0) /
+                  totalReviews) *
+                  10,
+              ) / 10
+            : 0;
+
+        const isOpen = isStoreCurrentlyOpen(
+          store.storeOpeningTime,
+          store.storeClosingTime,
+        );
+
+        return {
+          id: store.id,
+          userId: store.userId,
+          storeName: store.storeName || '',
+          storeDescription: store.storeDescription,
+          storeLogo: store.storeLogo,
+          storeCoverImage: store.storeCoverImages?.[0] || null,
+          location: store.storeLocation,
+          distanceKm,
+          averageRating,
+          totalReviews,
+          jewelleryStartingPrice: store.jewelleryStartingPrice
+            ? Number(store.jewelleryStartingPrice)
+            : null,
+          isOpen,
+          isFavorite: true,
+          storeOpeningTime: store.storeOpeningTime,
+          storeClosingTime: store.storeClosingTime,
+          favoritedAt: fav.createdAt,
+        };
+      });
+
+    const total = items.length;
+    const startIndex = (page - 1) * limit;
+    const paginatedItems = items.slice(startIndex, startIndex + limit);
+
+    return {
+      items: paginatedItems,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit) || 1,
+      },
     };
   }
 }

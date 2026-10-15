@@ -8,11 +8,11 @@ export declare class VendorDashboardService {
         userId: string;
         createdAt: Date;
         updatedAt: Date;
-        isOnboarded: boolean;
-        onboardingStep: import(".prisma/client").$Enums.OnboardingStep;
         gender: import(".prisma/client").$Enums.Gender | null;
         dob: Date | null;
         profilePicture: string | null;
+        isOnboarded: boolean;
+        onboardingStep: import(".prisma/client").$Enums.OnboardingStep;
         storeName: string | null;
         storeDescription: string | null;
         storeLogo: string | null;

@@ -1,5 +1,5 @@
 import { AdminService } from '../services/admin.service';
-import { AdminLoginDto, AdminUpdateProfileDto, AdminChangePasswordDto } from '../dto/admin.dto';
+import { AdminLoginDto, AdminUpdateProfileDto, AdminChangePasswordDto, AdminBroadcastNotificationDto } from '../dto/admin.dto';
 import { Admin } from '@prisma/client';
 export declare class AdminController {
     private readonly adminService;
@@ -105,5 +105,40 @@ export declare class AdminController {
         isMobileVerified: boolean;
         createdAt: Date;
         updatedAt: Date;
+    }>;
+    uploadNotificationImage(file: Express.Multer.File): Promise<{
+        url: string;
+    }>;
+    broadcastNotification(dto: AdminBroadcastNotificationDto, image?: Express.Multer.File): Promise<{
+        message: string;
+        targetAudience: string;
+        totalUsers: number;
+        sentCount: number;
+        failureCount: number;
+    } | {
+        success: boolean;
+        sentCount: number;
+        targetUsers: number;
+        failureCount?: undefined;
+        message: string;
+        targetAudience: string;
+        totalUsers: number;
+    } | {
+        success: boolean;
+        targetUsers: number;
+        sentCount: number;
+        failureCount: number;
+        message: string;
+        targetAudience: string;
+        totalUsers: number;
+    }>;
+    getBroadcastHistory(page: number, limit: number): Promise<{
+        data: any[];
+        meta: {
+            total: number;
+            page: number;
+            limit: number;
+            totalPages: number;
+        };
     }>;
 }

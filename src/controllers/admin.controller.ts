@@ -27,6 +27,7 @@ import {
   AdminLoginDto,
   AdminUpdateProfileDto,
   AdminChangePasswordDto,
+  AdminBroadcastNotificationDto,
 } from '../dto/admin.dto';
 import { Admin } from '@prisma/client';
 
@@ -148,5 +149,43 @@ export class AdminController {
   @ApiOperation({ summary: 'Toggle vendor Active/Blocked status' })
   toggleVendorStatus(@Param('id') id: string) {
     return this.adminService.toggleVendorStatus(id);
+  }
+
+  // ── Notifications ─────────────────────────────────────
+
+  @Post('notifications/upload-image')
+  @UseGuards(AdminJwtGuard)
+  @ApiBearerAuth('bearer')
+  @UseInterceptors(FileInterceptor('image', { storage: memoryStorage() }))
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Upload notification banner image' })
+  uploadNotificationImage(@UploadedFile() file: Express.Multer.File) {
+    return this.adminService.uploadNotificationImage(file);
+  }
+
+  @Post('notifications/broadcast')
+  @UseGuards(AdminJwtGuard)
+  @ApiBearerAuth('bearer')
+  @UseInterceptors(FileInterceptor('image', { storage: memoryStorage() }))
+  @ApiConsumes('multipart/form-data', 'application/json')
+  @ApiOperation({ summary: 'Broadcast push and in-app notification to Users, Vendors, or Both' })
+  broadcastNotification(
+    @Body() dto: AdminBroadcastNotificationDto,
+    @UploadedFile() image?: Express.Multer.File,
+  ) {
+    return this.adminService.broadcastNotification(dto, image);
+  }
+
+  @Get('notifications/history')
+  @UseGuards(AdminJwtGuard)
+  @ApiBearerAuth('bearer')
+  @ApiOperation({ summary: 'Get broadcast notification history' })
+  @ApiQuery({ name: 'page', required: false })
+  @ApiQuery({ name: 'limit', required: false })
+  getBroadcastHistory(
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+  ) {
+    return this.adminService.getBroadcastHistory(page, limit);
   }
 }

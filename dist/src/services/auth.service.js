@@ -163,9 +163,20 @@ let AuthService = class AuthService {
     }
     async getOnboardingStatus(user) {
         if (user.type === client_1.UserType.USER) {
+            if (this.prisma) {
+                const userProfile = await this.prisma.userProfile.findUnique({
+                    where: { userId: user.userId },
+                    select: { isOnboarded: true },
+                });
+                const isOnboarded = userProfile?.isOnboarded ?? false;
+                return {
+                    isOnboarded,
+                    onboardingStep: isOnboarded ? client_1.OnboardingStep.COMPLETED : client_1.OnboardingStep.PENDING,
+                };
+            }
             return {
-                isOnboarded: true,
-                onboardingStep: client_1.OnboardingStep.COMPLETED,
+                isOnboarded: false,
+                onboardingStep: client_1.OnboardingStep.PENDING,
             };
         }
         if (this.prisma) {

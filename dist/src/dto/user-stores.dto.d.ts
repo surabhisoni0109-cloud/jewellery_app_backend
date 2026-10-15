@@ -28,6 +28,7 @@ export declare class StoreListItemDto {
     totalReviews: number;
     jewelleryStartingPrice: number | null;
     isOpen: boolean;
+    isFavorite: boolean;
     storeOpeningTime: string | null;
     storeClosingTime: string | null;
 }
@@ -55,6 +56,7 @@ export declare class StoreDetailsDto {
     storeClosingTime: string | null;
     storeFoundedYear: number | null;
     isOpen: boolean;
+    isFavorite: boolean;
     ratingSummary: RatingSummaryDto;
 }
 export declare class StoreJewelleryQueryDto {
@@ -105,4 +107,14 @@ export declare class CreateStoreRatingDto {
 export declare class CreateStoreEnquiryDto {
     message: string;
     jewelleryId?: string;
+}
+export declare class ToggleFavoriteResponseDto {
+    isFavorite: boolean;
+    message: string;
+}
+export declare class FavoriteStoresQueryDto {
+    latitude?: number;
+    longitude?: number;
+    page?: number;
+    limit?: number;
 }

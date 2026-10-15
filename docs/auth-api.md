@@ -103,8 +103,8 @@ After receiving the OTP, the user verifies their mobile number.
     "email": "yogesh@example.com",
     "token": "JWT_ACCESS_TOKEN",
     "refreshToken": "JWT_REFRESH_TOKEN",
-    "isOnboarded": true,
-    "onboardingStep": "COMPLETED"
+    "isOnboarded": false,
+    "onboardingStep": "PENDING"
   }
 }
 ```

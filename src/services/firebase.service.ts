@@ -37,17 +37,34 @@ export class FirebaseService implements OnModuleInit {
     this.initializeFirebase();
   }
 
+  private sanitizeEnvString(val?: string): string | undefined {
+    if (!val) return undefined;
+    let s = val.trim();
+    if (s.endsWith(',')) s = s.slice(0, -1).trim();
+    if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
+      s = s.slice(1, -1).trim();
+    }
+    if (s.endsWith(',')) s = s.slice(0, -1).trim();
+    return s || undefined;
+  }
+
   private formatPrivateKey(key: string): string {
     let formatted = key.trim();
+    if (formatted.endsWith(',')) {
+      formatted = formatted.slice(0, -1).trim();
+    }
     // Remove enclosing double or single quotes if present
     if (
       (formatted.startsWith('"') && formatted.endsWith('"')) ||
       (formatted.startsWith("'") && formatted.endsWith("'"))
     ) {
-      formatted = formatted.slice(1, -1);
+      formatted = formatted.slice(1, -1).trim();
     }
-    // Replace escaped \n with actual newlines
-    return formatted.replace(/\\n/g, '\n');
+    if (formatted.endsWith(',')) {
+      formatted = formatted.slice(0, -1).trim();
+    }
+    // Remove \r and replace escaped \n with actual newlines
+    return formatted.replace(/\r/g, '').replace(/\\n/g, '\n');
   }
 
   private initializeFirebase() {
@@ -61,8 +78,8 @@ export class FirebaseService implements OnModuleInit {
       }
 
       // ── Primary Method: Individual Environment Variables ─────────────────
-      const projectId = this.configService.get<string>('FIREBASE_PROJECT_ID');
-      const clientEmail = this.configService.get<string>('FIREBASE_CLIENT_EMAIL');
+      const projectId = this.sanitizeEnvString(this.configService.get<string>('FIREBASE_PROJECT_ID'));
+      const clientEmail = this.sanitizeEnvString(this.configService.get<string>('FIREBASE_CLIENT_EMAIL'));
       const privateKeyRaw = this.configService.get<string>('FIREBASE_PRIVATE_KEY');
 
       if (projectId && clientEmail && privateKeyRaw) {

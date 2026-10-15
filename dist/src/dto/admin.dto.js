@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.AdminChangePasswordDto = exports.AdminUpdateProfileDto = exports.AdminLoginDto = void 0;
+exports.AdminBroadcastNotificationDto = exports.AdminChangePasswordDto = exports.AdminUpdateProfileDto = exports.AdminLoginDto = void 0;
 const class_validator_1 = require("class-validator");
 const swagger_1 = require("@nestjs/swagger");
 class AdminLoginDto {
@@ -58,4 +58,47 @@ __decorate([
     (0, class_validator_1.MinLength)(6, { message: 'New password must be at least 6 characters' }),
     __metadata("design:type", String)
 ], AdminChangePasswordDto.prototype, "newPassword", void 0);
+const class_transformer_1 = require("class-transformer");
+class AdminBroadcastNotificationDto {
+}
+exports.AdminBroadcastNotificationDto = AdminBroadcastNotificationDto;
+__decorate([
+    (0, swagger_1.ApiProperty)({ example: 'Special Festive Discount!' }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)({ message: 'Title is required' }),
+    __metadata("design:type", String)
+], AdminBroadcastNotificationDto.prototype, "title", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ example: 'Get flat 20% off on jewellery making charges this weekend.' }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)({ message: 'Description is required' }),
+    __metadata("design:type", String)
+], AdminBroadcastNotificationDto.prototype, "body", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        example: ['USER', 'VENDOR'],
+        description: 'Target audience: USER, VENDOR, or both',
+        isArray: true,
+    }),
+    (0, class_validator_1.IsNotEmpty)({ message: 'Target audience is required' }),
+    (0, class_transformer_1.Transform)(({ value }) => {
+        if (typeof value === 'string') {
+            try {
+                const parsed = JSON.parse(value);
+                if (Array.isArray(parsed))
+                    return parsed;
+            }
+            catch { }
+            return value.split(',').map((v) => v.trim()).filter(Boolean);
+        }
+        return value;
+    }),
+    __metadata("design:type", Array)
+], AdminBroadcastNotificationDto.prototype, "targets", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ example: 'https://example.com/banner.jpg' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], AdminBroadcastNotificationDto.prototype, "imageUrl", void 0);
 //# sourceMappingURL=admin.dto.js.map
